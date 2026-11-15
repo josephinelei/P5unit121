@@ -1,0 +1,3051 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>小數乘小數：鑽地鼠小數點定位大冒險</title>
+<style>
+    :root {
+        --app-height: 100dvh;
+        --bg-cream: #fdf8eb;
+        --border-dark: #3d2b1f;
+    }
+
+    * {
+        box-sizing: border-box;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100dvh;
+        height: var(--app-height, 100dvh);
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+        background: #f6eedc;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mono-num {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ================= 1. TOP COMPACT BAR (50px) ================= */
+    .top-bar {
+        height: 50px;
+        min-height: 50px;
+        max-height: 50px;
+        background: linear-gradient(180deg, #4a2c1d 0%, #361f14 100%);
+        border-bottom: 3px solid #23120b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        gap: 6px;
+        z-index: 30;
+        color: #fff;
+    }
+
+    .top-left, .top-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .brand-pill {
+        background: linear-gradient(135deg, #fde047 0%, #f59e0b 100%);
+        color: #3e2723;
+        font-weight: 900;
+        font-size: clamp(13px, 1.5vw, 16px);
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 2px solid #fffbeb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .challenger-wrap {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(0,0,0,0.28);
+        padding: 3px 8px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .challenger-label {
+        font-size: 13px;
+        font-weight: 800;
+        color: #fde68a;
+        white-space: nowrap;
+    }
+
+    .student-select {
+        background: #fffbeb;
+        color: #3e2723;
+        font-weight: 900;
+        font-size: 14px;
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 2px 6px;
+        height: 32px;
+        outline: none;
+        cursor: pointer;
+        max-width: 150px;
+    }
+
+    .btn-top {
+        height: 34px;
+        padding: 0 11px;
+        border-radius: 10px;
+        font-weight: 900;
+        font-size: clamp(12px, 1.3vw, 14px);
+        border: 2px solid rgba(255,255,255,0.4);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+        transition: transform 0.1s;
+    }
+    .btn-top:active {
+        transform: scale(0.95);
+    }
+
+    .btn-logout {
+        background: #f43f5e;
+        color: #fff;
+        border-color: #fecdd3;
+    }
+
+    .teacher-gold-badge {
+        background: linear-gradient(135deg, #fef08a, #eab308);
+        color: #422006;
+        font-size: 12px;
+        font-weight: 900;
+        padding: 4px 8px;
+        border-radius: 8px;
+        border: 2px solid #fff;
+        white-space: nowrap;
+        display: none;
+    }
+
+    .hole-badge {
+        background: #065f46;
+        color: #ecfdf5;
+        border: 2px solid #34d399;
+        padding: 0 11px;
+        height: 34px;
+        border-radius: 10px;
+        font-weight: 900;
+        font-size: clamp(12px, 1.3vw, 14px);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .timer-badge {
+        background: #1e293b;
+        color: #f8fafc;
+        border: 2px solid #94a3b8;
+        padding: 0 11px;
+        height: 34px;
+        border-radius: 10px;
+        font-weight: 900;
+        font-size: clamp(13px, 1.4vw, 15px);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .timer-badge.urgent {
+        background: #dc2626;
+        border-color: #fecaca;
+        color: #fff;
+        animation: blinkUrgent 0.8s infinite;
+    }
+
+    @keyframes blinkUrgent {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.78; transform: scale(1.03); }
+    }
+
+    .btn-report {
+        background: #8b5cf6;
+        color: #fff;
+        border-color: #ddd6fe;
+    }
+    .btn-stats {
+        background: #f59e0b;
+        color: #3e2723;
+        border-color: #fef3c7;
+    }
+
+    /* ================= 2. MAIN WORKSPACE (REFERENCE LAYOUT) ================= */
+    .main-area {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 56% 44%;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #f6eedc;
+    }
+
+    /* LEFT CARD: Sky + Underground S-Curve Maze + Bottom Progress Bar */
+    .maze-panel {
+        min-height: 0;
+        height: 100%;
+        background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 26%, #d9f99d 45%, #854d0e 65%, #713f12 100%);
+        border-radius: 22px;
+        border: 4px solid #78350f;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 12px 14px;
+        position: relative;
+        overflow: hidden;
+        gap: 8px;
+    }
+
+    .maze-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 5;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .stage-pill {
+        background: #ffffff;
+        color: #78350f;
+        font-weight: 900;
+        font-size: clamp(12px, 1.3vw, 14px);
+        padding: 5px 14px;
+        border-radius: 999px;
+        border: 2px solid #f59e0b;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .maze-tip {
+        background: #fef3c7;
+        color: #92400e;
+        font-size: clamp(11px, 1.15vw, 13px);
+        font-weight: 900;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1.5px solid #fcd34d;
+    }
+
+    /* Inner Rounded Underground Scene Frame */
+    .maze-scene-card {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #6b3410;
+        position: relative;
+    }
+
+    #mazeSvg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* Bottom Adventure Progress Bar */
+    .maze-footer-bar {
+        flex-shrink: 0;
+        height: 36px;
+        background: #451a03;
+        border: 2px solid #78350f;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 10px;
+        color: #fde68a;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    .adv-track {
+        flex: 1;
+        height: 12px;
+        background: #271206;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #78350f;
+    }
+
+    .adv-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #4ade80, #16a34a);
+        border-radius: 999px;
+        transition: width 0.35s ease;
+    }
+
+    /* Mole & Bubble Animations */
+    @keyframes popUpMole {
+        0% { transform: translateY(32px) scale(0.35); opacity: 0; }
+        65% { transform: translateY(-4px) scale(1.05); opacity: 1; }
+        100% { transform: translateY(0px) scale(1); opacity: 1; }
+    }
+    @keyframes duckDownMole {
+        0% { transform: translateY(0px) scale(1); opacity: 1; }
+        100% { transform: translateY(34px) scale(0.25); opacity: 0; }
+    }
+    @keyframes floatBubble {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-3px); }
+    }
+    @keyframes shakePanel {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-8px); }
+        40%, 80% { transform: translateX(8px); }
+    }
+
+    .mole-pop {
+        animation: popUpMole 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        transform-origin: bottom center;
+    }
+    .mole-duck {
+        animation: duckDownMole 0.26s ease-in forwards;
+        transform-origin: bottom center;
+    }
+    .bubble-float {
+        animation: floatBubble 2.2s ease-in-out infinite;
+    }
+    .shake-anim {
+        animation: shakePanel 0.42s ease-in-out;
+    }
+
+    /* ================= RIGHT CARD: VERTICAL DECIMAL CHALLENGE ================= */
+    .control-panel {
+        min-height: 0;
+        height: 100%;
+        background: #ffffff;
+        border-radius: 22px;
+        border: 3px solid #fde68a;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    /* Row 1: Top Header Pills */
+    .right-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .challenge-tag-pill {
+        background: #fffbeb;
+        color: #92400e;
+        border: 1.5px solid #fcd34d;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: clamp(12px, 1.25vw, 14px);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .ruler-toggle-btn {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1.5px solid #bfdbfe;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: clamp(11px, 1.2vw, 13px);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s;
+    }
+    .ruler-toggle-btn.off {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #cbd5e1;
+    }
+
+    /* Row 2: Cream Horizontal Formula Banner */
+    .formula-banner {
+        flex-shrink: 0;
+        background: #fffbeb;
+        border: 2px solid #fde68a;
+        border-radius: 14px;
+        padding: 6px 12px;
+        text-align: center;
+    }
+
+    .formula-sub-label {
+        font-size: 11px;
+        font-weight: 900;
+        color: #b45309;
+        margin-bottom: 1px;
+    }
+
+    .formula-main-eq {
+        font-size: clamp(20px, 2.6vh, 27px);
+        font-weight: 900;
+        color: #1e293b;
+        letter-spacing: 1px;
+    }
+    .formula-main-eq .q-mark {
+        color: #e11d48;
+    }
+
+    /* Row 3: Dark Blue Grid Chalkboard (#0f172a) */
+    .chalkboard-card {
+        flex: 1;
+        min-height: 0;
+        background-color: #0f172a;
+        background-image:
+            linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+        background-size: 24px 24px;
+        border: 3px solid #9a3412;
+        border-radius: 18px;
+        padding: 8px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #f8fafc;
+        box-shadow: inset 0 3px 10px rgba(0,0,0,0.45);
+        overflow: hidden;
+    }
+
+    .chalk-top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        padding-bottom: 5px;
+        flex-shrink: 0;
+    }
+
+    .chalk-instruction {
+        font-size: clamp(11px, 1.15vw, 13px);
+        font-weight: 800;
+        color: #fcd34d;
+    }
+
+    .chalk-status-pill {
+        background: #1e293b;
+        color: #cbd5e1;
+        border: 1px solid #475569;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 2px 9px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .chalk-status-pill.active {
+        background: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+        border-color: #10b981;
+    }
+
+    /* Unified CSS Grid Vertical Calculation Stage (100% Column-Aligned) */
+    .chalk-calc-stage {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 0;
+    }
+
+    .v-unified-grid {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+        row-gap: 4px;
+        column-gap: 0px;
+        padding: 4px 10px;
+    }
+
+    .v-role-cell {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-right: 10px;
+        white-space: nowrap;
+    }
+
+    .v-role-tag {
+        background: #1e293b;
+        color: #94a3b8;
+        border: 1px solid #334155;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 5px;
+        letter-spacing: 0;
+    }
+
+    .v-op-sign {
+        color: #facc15;
+        font-size: clamp(22px, 3vh, 30px);
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .v-grid-digit {
+        font-size: clamp(24px, 3.4vh, 34px);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1.12;
+        text-align: center;
+        width: 100%;
+    }
+
+    .v-grid-partial-digit {
+        font-size: clamp(22px, 3vh, 30px);
+        font-weight: 900;
+        color: #cbd5e1;
+        line-height: 1.1;
+        text-align: center;
+        width: 100%;
+    }
+
+    .v-grid-dot {
+        font-size: clamp(24px, 3.4vh, 34px);
+        font-weight: 900;
+        color: #facc15;
+        line-height: 1;
+        text-align: center;
+        width: 100%;
+    }
+
+    .v-dec-highlight-a {
+        background: #fde047;
+        color: #78350f !important;
+        border-radius: 6px;
+        padding: 0 3px;
+        box-shadow: 0 0 0 2px #f59e0b;
+    }
+    .v-dec-highlight-b {
+        background: #38bdf8;
+        color: #082f49 !important;
+        border-radius: 6px;
+        padding: 0 3px;
+        box-shadow: 0 0 0 2px #0284c7;
+    }
+
+    .v-yellow-divider {
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 3px;
+        background: #f59e0b;
+        border-radius: 2px;
+        margin: 2px 0;
+    }
+
+    .v-white-divider {
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 2px;
+        background: #cbd5e1;
+        border-radius: 2px;
+        margin: 2px 0;
+    }
+
+    /* Product Row Backdrop inside the same Unified Grid */
+    .v-prod-backdrop {
+        background: rgba(30, 41, 59, 0.92);
+        border: 2px solid #475569;
+        border-radius: 16px;
+        width: calc(100% + 14px);
+        height: calc(100% + 6px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.32);
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .prod-digit-col {
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 4px 0 14px;
+    }
+
+    .prod-digit-char {
+        font-size: clamp(24px, 3.4vh, 34px);
+        font-weight: 900;
+        color: #ffffff;
+        line-height: 1.1;
+        padding: 0 2px;
+        position: relative;
+        cursor: pointer;
+    }
+    .prod-digit-char.struck-zero {
+        color: #64748b;
+    }
+    .prod-digit-char.struck-zero::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 100%;
+        height: 3px;
+        background: #ef4444;
+        transform: rotate(-25deg);
+    }
+
+    .slot-col {
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 5px;
+    }
+
+    .circle-slot-btn {
+        width: clamp(26px, 3.2vh, 32px);
+        height: clamp(26px, 3.2vh, 32px);
+        border-radius: 50%;
+        border: 2px dashed #eab308;
+        background: rgba(234, 179, 8, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        padding: 0;
+    }
+    .circle-slot-btn .inner-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(250, 204, 21, 0.45);
+        transition: all 0.15s ease;
+    }
+    .circle-slot-btn:hover {
+        transform: scale(1.08);
+        border-color: #fde047;
+        background: rgba(250, 204, 21, 0.22);
+    }
+    .circle-slot-btn.selected {
+        border: 2.5px solid #fef08a;
+        background: #eab308;
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.9);
+        transform: scale(1.1);
+    }
+    .circle-slot-btn.selected .inner-dot {
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+    }
+
+    .slot-ruler-label {
+        margin-top: 2px;
+        font-size: 10px;
+        font-weight: 900;
+        color: #94a3b8;
+        white-space: nowrap;
+        line-height: 1;
+    }
+    .slot-col.selected-col .slot-ruler-label {
+        color: #fde047;
+    }
+    .hide-ruler .slot-ruler-label {
+        visibility: hidden;
+    }
+
+    /* Chalkboard Bottom Info Row */
+    .chalk-bottom-info {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        padding-top: 5px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #cbd5e1;
+    }
+
+    .picked-result-badge {
+        background: #1e293b;
+        border: 1.5px solid #475569;
+        color: #facc15;
+        font-weight: 900;
+        font-size: 13px;
+        padding: 3px 10px;
+        border-radius: 8px;
+    }
+
+    .count-places-badge {
+        background: #0c4a6e;
+        border: 1.5px solid #0284c7;
+        color: #7dd3fc;
+        font-weight: 900;
+        font-size: 12px;
+        padding: 2px 10px;
+        border-radius: 8px;
+    }
+
+    /* Row 4: Hamster/Mole Guided Prompt Box */
+    .mole-prompt-box {
+        flex-shrink: 0;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 7px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        transition: all 0.2s;
+    }
+    .mole-prompt-box.warn-mode {
+        background: #fffbeb;
+        border-color: #f59e0b;
+    }
+    .mole-prompt-box.ok-mode {
+        background: #ecfdf5;
+        border-color: #10b981;
+    }
+
+    .mole-prompt-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .mole-prompt-text {
+        font-size: clamp(12px, 1.2vw, 13.5px);
+        font-weight: 800;
+        color: #334155;
+        line-height: 1.4;
+    }
+
+    /* Row 5: Bottom Action Buttons (Clear & Confirm) */
+    .bottom-action-row {
+        flex-shrink: 0;
+        display: grid;
+        grid-template-columns: 1fr 2.4fr;
+        gap: 10px;
+        height: clamp(42px, 6vh, 50px);
+    }
+
+    .btn-clear-choice {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 2px solid #cbd5e1;
+        border-radius: 14px;
+        font-weight: 900;
+        font-size: clamp(14px, 1.5vw, 16px);
+        cursor: pointer;
+        transition: transform 0.08s;
+    }
+    .btn-clear-choice:active {
+        transform: scale(0.97);
+    }
+
+    .btn-confirm-dot {
+        background: linear-gradient(180deg, #f59e0b 0%, #ea580c 100%);
+        color: #ffffff;
+        border: 2px solid #c2410c;
+        border-bottom-width: 4px;
+        border-radius: 14px;
+        font-weight: 900;
+        font-size: clamp(15px, 1.7vw, 18px);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+        transition: transform 0.08s;
+    }
+    .btn-confirm-dot:active {
+        transform: translateY(2px);
+        border-bottom-width: 2px;
+    }
+
+    /* ================= 3. MODALS & OVERLAYS ================= */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.68);
+        backdrop-filter: blur(3px);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+    }
+    .modal-backdrop.show {
+        display: flex;
+    }
+
+    /* Student Non-Spoiler Warm Hint Modal */
+    .hint-modal-card {
+        background: #fffbeb;
+        border: 4px solid #f59e0b;
+        border-radius: 24px;
+        max-width: 500px;
+        width: 100%;
+        padding: 18px 22px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+
+    /* Zero-Delay Stealth Password Modal (No active highlight) */
+    .pwd-modal-card {
+        background: #fdf8eb;
+        border: 4px solid #3d2b1f;
+        border-radius: 24px;
+        width: 340px;
+        padding: 18px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .pwd-slots {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+        margin: 12px 0;
+    }
+    .pwd-slot {
+        height: 42px;
+        border: 2px solid #3d2b1f;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 24px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3d2b1f;
+    }
+    .pwd-keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    /* CRITICAL: Zero visual highlight on click/active to prevent peeking */
+    .pwd-key {
+        height: 48px;
+        border: 2px solid #3d2b1f;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #3d2b1f;
+        font-size: 20px;
+        font-weight: 900;
+        cursor: pointer;
+        outline: none;
+        transition: none !important;
+    }
+    .pwd-key:hover, .pwd-key:active, .pwd-key:focus {
+        background: #ffffff !important;
+        color: #3d2b1f !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* ================= 4. CREAM DOTTED TEACHER DASHBOARD ================= */
+    .teacher-dashboard-card {
+        width: 96vw;
+        max-width: 1180px;
+        height: 92dvh;
+        background-color: #fdf8eb;
+        background-image: radial-gradient(#e6dec8 2px, transparent 2px);
+        background-size: 18px 18px;
+        border: 5px solid #3d2b1f;
+        border-radius: 26px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        padding: 14px 18px;
+        gap: 12px;
+        overflow: hidden;
+    }
+
+    .td-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        border-bottom: 2px solid rgba(61, 43, 31, 0.15);
+        padding-bottom: 8px;
+    }
+
+    .td-title-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: clamp(18px, 2.2vw, 24px);
+        font-weight: 900;
+        color: #3d2b1f;
+        border-bottom: 3px solid #3d2b1f;
+        padding-bottom: 2px;
+    }
+
+    .td-clock-box {
+        text-align: center;
+        line-height: 1.1;
+    }
+    .td-date-str {
+        font-size: 12px;
+        font-weight: 800;
+        color: #78716c;
+    }
+    .td-time-str {
+        font-size: clamp(22px, 2.8vw, 34px);
+        font-weight: 900;
+        color: #573d26;
+        letter-spacing: 1px;
+    }
+
+    .td-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .td-btn {
+        height: 38px;
+        padding: 0 13px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: 13px;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    }
+    .td-btn:active {
+        transform: translateY(2px);
+        box-shadow: none;
+    }
+    .td-btn-lock { background: #dc2626; }
+    .td-btn-lock.open-mode { background: #16a34a; }
+    .td-btn-diag { background: #7c3aed; }
+    .td-btn-sync { background: #2563eb; }
+    .td-btn-reset { background: #f59e0b; color: #3d2b1f; }
+    .td-btn-close { background: #334155; }
+
+    /* Teacher Dashboard Main 2-Column Body */
+    .td-body-grid {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 58% 41%;
+        gap: 14px;
+    }
+
+    .td-panel-box {
+        background: #ffffff;
+        border: 4px solid #4a3525;
+        border-radius: 22px;
+        padding: 16px 14px 12px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .td-floating-tag {
+        position: absolute;
+        top: -13px;
+        left: 16px;
+        padding: 3px 14px;
+        border-radius: 999px;
+        border: 2px solid #3d2b1f;
+        font-size: 12px;
+        font-weight: 900;
+        color: #3d2b1f;
+    }
+    .tag-pink { background: #f9a8d4; }
+    .tag-mint { background: #6ee7b7; }
+
+    /* Chick Progress Bar Box */
+    .chick-track-card {
+        background: #fcf9f2;
+        border: 2px solid #e7e0d0;
+        border-radius: 16px;
+        padding: 20px 14px 10px;
+        margin: 8px 0 10px;
+    }
+
+    .chick-bar-outer {
+        position: relative;
+        height: 24px;
+        background: #f5efe2;
+        border: 3px solid #4a3525;
+        border-radius: 999px;
+        overflow: visible;
+    }
+
+    .chick-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: repeating-linear-gradient(
+            -45deg,
+            #4fd1c5,
+            #4fd1c5 12px,
+            #81e6d9 12px,
+            #81e6d9 24px
+        );
+        transition: width 0.4s ease;
+    }
+
+    .chick-runner {
+        position: absolute;
+        top: -26px;
+        font-size: 22px;
+        transform: translateX(-50%) scaleX(-1);
+        transition: left 0.4s ease;
+        pointer-events: none;
+    }
+
+    .chick-flag {
+        position: absolute;
+        right: 4px;
+        top: -25px;
+        font-size: 20px;
+        pointer-events: none;
+    }
+
+    /* 34 Students 2-Col Progress List */
+    .student-cards-grid {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding-right: 4px;
+    }
+
+    .stu-prog-card {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 7px 10px;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .stu-prog-card:hover, .stu-prog-card.active-stu {
+        border-color: #f59e0b;
+        background: #fffbeb;
+    }
+    .stu-prog-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 900;
+        color: #1e293b;
+        margin-bottom: 5px;
+    }
+    .stu-bar-bg {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .stu-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.3s;
+    }
+
+    /* Right Column: Attendance + Top 10 Speed Leaderboard */
+    .attendance-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .att-box {
+        border: 3px solid #3d2b1f;
+        border-radius: 16px;
+        padding: 8px 12px;
+    }
+    .att-present { background: #eff6ff; }
+    .att-absent { background: #ecfdf5; }
+
+    .speed-board-card {
+        flex: 1;
+        min-height: 0;
+        background: #fff1f2;
+        border: 3px solid #3d2b1f;
+        border-radius: 18px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+    }
+    .speed-list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 6px;
+    }
+    .speed-item {
+        background: #ffffff;
+        border: 2px solid #fbcfe8;
+        border-radius: 10px;
+        padding: 6px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 900;
+    }
+
+    /* Lock Classroom Fullscreen Overlay */
+    .classroom-lock-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.94);
+        z-index: 200;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        text-align: center;
+        padding: 20px;
+    }
+    .classroom-lock-overlay.locked {
+        display: flex;
+    }
+</style>
+</head>
+<body>
+
+    <!-- ================= 1. TOP BAR (50px Compact) ================= -->
+    <header class="top-bar">
+        <div class="top-left">
+            <div class="brand-pill">🐹 小數乘小數</div>
+            <div class="challenger-wrap">
+                <span class="challenger-label">挑戰者：</span>
+                <select id="studentSelect" class="student-select">
+                    <option value="">👉 請選擇姓名</option>
+                </select>
+            </div>
+            <button id="btnLogout" class="btn-top btn-logout" title="安全登出並重置">🚪 登出</button>
+            <div id="teacherGoldBadge" class="teacher-gold-badge">👩‍🏫 教師免鎖</div>
+        </div>
+
+        <div class="top-right">
+            <div id="holeBadge" class="hole-badge mono-num">目的地洞 (1/20)</div>
+            <div id="timerBadge" class="timer-badge mono-num">⏱️ 05:00</div>
+            <button id="btnOpenReport" class="btn-top btn-report">📋 成績</button>
+            <button id="btnOpenStats" class="btn-top btn-stats">📊 統計</button>
+        </div>
+    </header>
+
+    <!-- ================= 2. MAIN INTERACTIVE WORKSPACE (REFERENCE IMAGE LAYOUT) ================= -->
+    <main class="main-area">
+        <!-- LEFT CARD: 20-Hole S-Curve Mole Maze + Bottom Adventure Progress Bar -->
+        <section class="maze-panel">
+            <div class="maze-header">
+                <div id="stagePillText" class="stage-pill">🎲 隨機挑戰模式：全 20 洞混合出題</div>
+                <div class="maze-tip">💡 點擊地洞也可快速切換題目</div>
+            </div>
+
+            <div class="maze-scene-card">
+                <svg id="mazeSvg" viewBox="0 0 760 470" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#84cc16"/>
+                            <stop offset="70%" stop-color="#65a30d"/>
+                            <stop offset="100%" stop-color="#4d7c0f"/>
+                        </linearGradient>
+                        <linearGradient id="soilGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#7c3a12"/>
+                            <stop offset="55%" stop-color="#5c280b"/>
+                            <stop offset="100%" stop-color="#3f1a06"/>
+                        </linearGradient>
+                        <linearGradient id="holeRim" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#d97706"/>
+                            <stop offset="100%" stop-color="#78350f"/>
+                        </linearGradient>
+                        <linearGradient id="holeDark" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1c1917"/>
+                            <stop offset="100%" stop-color="#292524"/>
+                        </linearGradient>
+                        <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Green Grass Top Band + Underground Brown Soil -->
+                    <rect x="0" y="0" width="760" height="62" fill="url(#skyGrad)"/>
+                    <rect x="0" y="62" width="760" height="408" fill="url(#soilGrad)"/>
+                    <line x1="0" y1="62" x2="760" y2="62" stroke="#3f6212" stroke-width="4"/>
+
+                    <!-- Decorative White Clouds on Green Band & Soil Patches -->
+                    <g opacity="0.92" fill="#ffffff">
+                        <ellipse cx="115" cy="22" rx="46" ry="13"/>
+                        <ellipse cx="145" cy="18" rx="30" ry="14"/>
+                        <ellipse cx="645" cy="24" rx="52" ry="13"/>
+                        <ellipse cx="680" cy="19" rx="34" ry="15"/>
+                    </g>
+                    <g opacity="0.22" fill="#271206">
+                        <ellipse cx="180" cy="155" rx="26" ry="11"/>
+                        <ellipse cx="520" cy="160" rx="28" ry="12"/>
+                        <ellipse cx="340" cy="285" rx="30" ry="12"/>
+                        <ellipse cx="620" cy="390" rx="25" ry="11"/>
+                    </g>
+
+                    <!-- Winding Underground S-Curve Tunnel -->
+                    <path id="tunnelOuter" d="" fill="none" stroke="#3b1a08" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" opacity="0.88"/>
+                    <path id="tunnelInner" d="" fill="none" stroke="#9a5b13" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                    <path id="tunnelDash" d="" fill="none" stroke="#fde68a" stroke-width="3.5" stroke-dasharray="8,10" stroke-linecap="round" opacity="0.85"/>
+
+                    <!-- 20 Burrow Holes Layer -->
+                    <g id="holesLayer"></g>
+
+                    <!-- Mole Actor & Equation Speech Bubble Layer -->
+                    <g id="moleLayer"></g>
+                </svg>
+            </div>
+
+            <!-- Bottom Adventure Progress Bar -->
+            <div class="maze-footer-bar">
+                <span>冒險進度：</span>
+                <div class="adv-track">
+                    <div id="advFillBar" class="adv-fill"></div>
+                </div>
+                <span id="advCountText" class="mono-num">0/20</span>
+            </div>
+        </section>
+
+        <!-- RIGHT CARD: Vertical Decimal Point Positioning Challenge -->
+        <section id="rightControlPanel" class="control-panel">
+            <!-- Row 1: Header Pills -->
+            <div class="right-top-row">
+                <div class="challenge-tag-pill">📌 直式小數點定位挑戰</div>
+                <button type="button" id="btnToggleRuler" class="ruler-toggle-btn">
+                    👁️ 顯示位數輔助尺：開
+                </button>
+            </div>
+
+            <!-- Row 2: Horizontal Formula Banner -->
+            <div class="formula-banner">
+                <div class="formula-sub-label">鑽地鼠頭上的算式：</div>
+                <div id="bannerFormulaText" class="formula-main-eq mono-num">
+                    1.5 × 0.4 = <span class="q-mark">?</span>
+                </div>
+            </div>
+
+            <!-- Row 3: Dark Blue Grid Chalkboard -->
+            <div id="chalkboardCard" class="chalkboard-card">
+                <div class="chalk-top-bar">
+                    <span class="chalk-instruction">👆 觀察上方小數位，點擊最下方積的圓圈放入小數點</span>
+                    <span id="chalkStatusPill" class="chalk-status-pill">尚未點選小數點</span>
+                </div>
+
+                <!-- Strictly Aligned Unified CSS Grid Stage -->
+                <div class="chalk-calc-stage">
+                    <div id="unifiedCalcGrid" class="v-unified-grid mono-num"></div>
+                </div>
+
+                <!-- Bottom Info Bar inside Chalkboard -->
+                <div class="chalk-bottom-info">
+                    <div>
+                        你點選的結果：<span id="pickedResultBadge" class="picked-result-badge mono-num">請點擊上方圓圈 ●</span>
+                    </div>
+                    <div>
+                        從右往左數：<span id="countPlacesBadge" class="count-places-badge mono-num">-- 位小數</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 4: Mole Warm Prompt Bar -->
+            <div id="molePromptBox" class="mole-prompt-box">
+                <span class="mole-prompt-icon">🐹</span>
+                <div id="molePromptText" class="mole-prompt-text">
+                    第 1 洞：請觀察直式中「被乘數」和「乘數」各有幾個小數位，再點擊最下方積的圓圈放入小數點！
+                </div>
+            </div>
+
+            <!-- Row 5: Bottom Action Buttons -->
+            <div class="bottom-action-row">
+                <button type="button" id="btnClearChoice" class="btn-clear-choice">清除重選</button>
+                <button type="button" id="btnConfirmDot" class="btn-confirm-dot">
+                    <span>✅</span>
+                    <span>確認小數點位置</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= 3. STUDENT WARM HINT MODAL (NON-SPOILER) ================= -->
+    <div id="warmHintModal" class="modal-backdrop">
+        <div class="hint-modal-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="font-size:32px;">💡</span>
+                <div>
+                    <h3 style="font-size:20px;font-weight:900;color:#92400e;">溫馨小提示與鼓勵</h3>
+                    <p id="hintDiagTitle" style="font-size:13px;font-weight:800;color:#b45309;">鑽地鼠停在原地等你再試一次喔！</p>
+                </div>
+            </div>
+            <div id="hintBodyText" style="background:#ffffff;border:2px solid #fcd34d;border-radius:14px;padding:12px 14px;font-size:15px;font-weight:800;color:#1e293b;line-height:1.55;margin-bottom:14px;">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button id="btnCloseHint" class="btn-top" style="height:40px;padding:0 20px;background:#f59e0b;color:#3e2723;border-color:#d97706;font-size:15px;">💪 我知道了，再試一次</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 4. STUDENT SCORE REPORT MODAL (SPOILER-LOCKED) ================= -->
+    <div id="reportModal" class="modal-backdrop">
+        <div style="background:#fff;border:4px solid #8b5cf6;border-radius:24px;width:92vw;max-width:740px;max-height:86dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 15px 35px rgba(0,0,0,0.4);">
+            <div style="background:#7c3aed;color:#fff;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:18px;font-weight:900;">📋 個人闖關成績報告單（未過關題目自動遮蔽答案）</div>
+                <button id="btnCloseReport" class="btn-top" style="background:#4c1d95;color:#fff;">✖ 關閉</button>
+            </div>
+            <div style="padding:10px 18px;background:#f5f3ff;border-bottom:2px solid #ddd6fe;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-weight:900;font-size:14px;color:#4c1d95;">
+                <span id="reportStudentName">挑戰者：未選擇</span>
+                <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                    <span style="background:#ecfdf5;border:1.5px solid #10b981;color:#065f46;padding:2px 8px;border-radius:6px;">🟩 綠底：一次答對</span>
+                    <span style="background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:2px 8px;border-radius:6px;">🟨 珀黃底：曾錯後訂正答對</span>
+                </div>
+                <span id="reportProgressSummary">已解鎖地洞：0 / 20 題</span>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:12px 18px;">
+                <table style="width:100%;border-collapse:collapse;font-size:14px;font-weight:800;">
+                    <thead>
+                        <tr style="background:#ede9fe;color:#5b21b6;text-align:left;">
+                            <th style="padding:8px;border-bottom:2px solid #c4b5fd;">地洞</th>
+                            <th style="padding:8px;border-bottom:2px solid #c4b5fd;">指定算式</th>
+                            <th style="padding:8px;border-bottom:2px solid #c4b5fd;">闖關狀態</th>
+                            <th style="padding:8px;border-bottom:2px solid #c4b5fd;">你的作答紀錄</th>
+                            <th style="padding:8px;border-bottom:2px solid #c4b5fd;">標準答案</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 5. STEALTH ZERO-DELAY PASSWORD MODAL (400351) ================= -->
+    <div id="pwdModal" class="modal-backdrop">
+        <div class="pwd-modal-card">
+            <div style="font-size:18px;font-weight:900;color:#3d2b1f;">🔒 教師統計看板驗證</div>
+            <div style="font-size:12px;font-weight:800;color:#78716c;margin-top:2px;">請輸入 6 位數教師密碼（防窺零高亮鍵盤）</div>
+            <div id="pwdSlots" class="pwd-slots">
+                <div class="pwd-slot"></div>
+                <div class="pwd-slot"></div>
+                <div class="pwd-slot"></div>
+                <div class="pwd-slot"></div>
+                <div class="pwd-slot"></div>
+                <div class="pwd-slot"></div>
+            </div>
+            <div id="pwdErrorMsg" style="height:18px;font-size:12px;font-weight:900;color:#dc2626;margin-bottom:6px;"></div>
+            <div class="pwd-keypad" id="pwdKeypad">
+                <button type="button" class="pwd-key" data-p="1">1</button>
+                <button type="button" class="pwd-key" data-p="2">2</button>
+                <button type="button" class="pwd-key" data-p="3">3</button>
+                <button type="button" class="pwd-key" data-p="4">4</button>
+                <button type="button" class="pwd-key" data-p="5">5</button>
+                <button type="button" class="pwd-key" data-p="6">6</button>
+                <button type="button" class="pwd-key" data-p="7">7</button>
+                <button type="button" class="pwd-key" data-p="8">8</button>
+                <button type="button" class="pwd-key" data-p="9">9</button>
+                <button type="button" class="pwd-key" data-p="CLR" style="font-size:14px;">清除</button>
+                <button type="button" class="pwd-key" data-p="0">0</button>
+                <button type="button" class="pwd-key" data-p="CLOSE" style="font-size:14px;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 6. CREAM DOTTED TEACHER DASHBOARD MODAL ================= -->
+    <div id="teacherModal" class="modal-backdrop">
+        <div class="teacher-dashboard-card">
+            <!-- Top Header Bar -->
+            <div class="td-header">
+                <div class="td-title-box">
+                    <span>📋</span>
+                    <span>課堂活動數據統計</span>
+                </div>
+
+                <div class="td-clock-box">
+                    <div id="tdDateStr" class="td-date-str">2026年11月15日 星期日</div>
+                    <div id="tdTimeStr" class="td-time-str mono-num">21:35:06</div>
+                </div>
+
+                <div class="td-actions">
+                    <button id="btnTdToggleLock" class="td-btn td-btn-lock">🔒 一鍵鎖定課堂</button>
+                    <button id="btnTdToggleView" class="td-btn td-btn-diag">🩺 錯題診斷</button>
+                    <button id="btnTdSyncNow" class="td-btn td-btn-sync">🔄 同步數據</button>
+                    <button id="btnTdResetAll" class="td-btn td-btn-reset">🗑️ 清空重置</button>
+                    <button id="btnTdClose" class="td-btn td-btn-close">✖ 關閉</button>
+                </div>
+            </div>
+
+            <!-- VIEW A: STUDENT PROGRESS & CHICK TRACK + SPEED LEADERBOARD -->
+            <div id="tdProgressView" class="td-body-grid">
+                <!-- Left Column: Class Average & Chick Track & 34 Student Cards -->
+                <div class="td-panel-box">
+                    <div class="td-floating-tag tag-pink">小數乘小數（全 20 題）</div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+                        <div>
+                            <div style="font-size:18px;font-weight:900;color:#1e293b;">學生答對題數：</div>
+                            <div id="tdAvgTitle" style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:2px;">
+                                全班平均答對題數 (0.0/20)
+                            </div>
+                        </div>
+                        <button id="btnShowClassAvg" style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:900;color:#334155;cursor:pointer;">
+                            👥 顯示全班平均
+                        </button>
+                    </div>
+
+                    <!-- Chick Running to Flag Progress Bar -->
+                    <div class="chick-track-card">
+                        <div class="chick-bar-outer">
+                            <div id="chickBarFill" class="chick-bar-fill" style="width: 0%;"></div>
+                            <div id="chickRunner" class="chick-runner" style="left: 0%;">🐤</div>
+                            <div class="chick-flag">🚩</div>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;font-size:12px;font-weight:900;color:#57534e;">
+                            <span>點擊下方學生可單獨檢視小雞進度</span>
+                            <span id="chickPercentText" class="mono-num" style="font-size:14px;color:#1e293b;">0%</span>
+                            <span style="font-size:14px;color:#1e293b;">正確率 / 完成度</span>
+                        </div>
+                    </div>
+
+                    <!-- 34 Student Progress Cards Grid -->
+                    <div id="tdStudentCardsGrid" class="student-cards-grid"></div>
+                </div>
+
+                <!-- Right Column: Attendance + Top 10 Speed Leaderboard -->
+                <div class="td-panel-box">
+                    <div class="td-floating-tag tag-mint">出(缺)席</div>
+
+                    <div class="attendance-row" style="margin-top:6px;">
+                        <div class="att-box att-present">
+                            <div style="font-size:13px;font-weight:900;color:#1e293b;">出席 (已作答) :</div>
+                            <div style="font-size:32px;font-weight:900;color:#1e293b;line-height:1.1;margin-top:4px;">
+                                <span id="tdPresentCount" class="mono-num">0</span> <span style="font-size:15px;">人</span>
+                            </div>
+                        </div>
+                        <div class="att-box att-absent">
+                            <div style="font-size:13px;font-weight:900;color:#1e293b;">缺席 (未作答) :</div>
+                            <div style="font-size:32px;font-weight:900;color:#1e293b;line-height:1.1;margin-top:4px;">
+                                <span id="tdAbsentCount" class="mono-num">34</span> <span style="font-size:15px;">人</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="speed-board-card">
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div style="font-size:15px;font-weight:900;color:#1e293b;">🏆 速度王排行榜 (首10人) :</div>
+                            <div style="font-size:11px;font-weight:900;color:#be123c;">按完成題數與時間排序</div>
+                        </div>
+                        <div id="tdSpeedList" class="speed-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW B: ERROR DIAGNOSIS & ONE-CLICK 3-STEP PROJECTION EXPLANATION -->
+            <div id="tdDiagnosisView" style="display:none;flex:1;min-height:0;flex-direction:column;background:#fff;border:4px solid #4a3525;border-radius:22px;padding:14px;overflow:hidden;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div>
+                        <span style="font-size:18px;font-weight:900;color:#3d2b1f;">🩺 全班 20 道題錯題診斷排行榜</span>
+                        <span style="font-size:12px;font-weight:800;color:#64748b;margin-left:8px;">點擊右側「🔍 投影直式講解」可展示完整三步驟直式解析</span>
+                    </div>
+                    <div id="tdSyncStatusText" style="font-size:12px;font-weight:800;color:#059669;">雲端同步正常</div>
+                </div>
+                <div id="tdDiagnosisList" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 7. TEACHER 3-STEP PROJECTOR EXPLANATION MODAL ================= -->
+    <div id="projectorModal" class="modal-backdrop" style="z-index:130;">
+        <div style="background:#fffbeb;border:5px solid #3d2b1f;border-radius:26px;width:94vw;max-width:920px;padding:18px 22px;box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #fde68a;padding-bottom:10px;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="background:#7c3aed;color:#fff;font-weight:900;padding:4px 12px;border-radius:999px;font-size:14px;">👩‍🏫 教師專屬投影直式講解</span>
+                    <h3 id="projTitleEq" class="mono-num" style="font-size:24px;font-weight:900;color:#3d2b1f;">1.5 × 0.4 = 0.6</h3>
+                </div>
+                <button id="btnCloseProjector" class="td-btn td-btn-close">✖ 關閉講解</button>
+            </div>
+
+            <div id="projStepsGrid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;">
+                <!-- Populated dynamically with Step 1, Step 2, Step 3 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 8. CLASSROOM LOCK OVERLAY (WHEN data1!A1 = closed) ================= -->
+    <div id="classroomLockOverlay" class="classroom-lock-overlay">
+        <div style="font-size:72px;margin-bottom:12px;">🔒</div>
+        <h2 style="font-size:32px;font-weight:900;color:#fde047;margin-bottom:8px;">老師已鎖定課堂畫面</h2>
+        <p style="font-size:18px;font-weight:800;color:#e2e8f0;max-width:480px;line-height:1.5;">
+            請放下 iPad，抬頭看前方投影幕聽老師講解「小數點定位三步驟」！
+        </p>
+        <button id="btnTeacherUnlockOnOverlay" class="btn-top" style="margin-top:24px;background:#334155;color:#cbd5e1;border-color:#475569;">
+            👩‍🏫 教師密碼解鎖
+        </button>
+    </div>
+
+<script>
+/********************************************************************
+ * 1. IPAD SAFARI DYNAMIC VIEWPORT HEIGHT ADAPTATION (100dvh fix)
+ ********************************************************************/
+function updateAppHeight() {
+    const vh = (window.visualViewport && window.visualViewport.height)
+        ? window.visualViewport.height
+        : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${vh}px`);
+}
+window.addEventListener('resize', updateAppHeight);
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateAppHeight);
+    window.visualViewport.addEventListener('scroll', updateAppHeight);
+}
+updateAppHeight();
+
+/********************************************************************
+ * 2. FIXED 35 STUDENT ROSTER & GAS BACKEND CONFIG
+ ********************************************************************/
+const STUDENT_ROSTER = [
+    "1 王仕軒", "2 吳映林", "3 阮苡喬", "4 武沛瑤", "5 梁愷喬",
+    "6 陳樂怡", "7 陳蘊瀅", "8 賀梓桐", "9 馮子嫣", "10 黃羽晞",
+    "11 黃紫晴", "12 樊婧瑤", "13 蔣月晴", "14 關咏芯", "15 毛穎聰",
+    "16 王柏言", "17 吳燁朗", "18 李東燁", "19 李健峰", "20 李梓萬",
+    "21 邱子毅", "22 張曉鋒", "23 陳殷齊", "24 勞家謙", "25 曾建言",
+    "26 黃昊霆", "27 黃柏希", "28 黃翊鎧", "29 楊溢曦", "30 蔡一駿",
+    "31 蔡榐顥", "32 鄭行之", "33 盧澤軒", "34 關智誠", "35 訪客"
+];
+
+const SHEET_ID = "1Y6RLbPpeK4KP9IM3s2xooqHtKZA_3FGe7v1Xg1f5oOg";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzvzDqoJN5atL6vLygpwOen-q5q1V_NM80pKMC4rbeLOfO_GEmQ71vlJxr8THG89nUH/exec";
+const DATA_SHEET_NAME = "小數乘整數_data";
+
+/********************************************************************
+ * 3. SPECIFIED 20 QUESTIONS BANK & WHITELIST MAPPING
+ ********************************************************************/
+const MASTER_QUESTIONS = [
+    // 20 Specified Questions (Full Random Shuffle across 20 holes)
+    { id: 1,  code: "Q01", type: "一位×一位", expr: "1.5×0.4",   a: "1.5",   b: "0.4",  aDec: 1, bDec: 1, intA: 15,  intB: 4,  intProd: 60,   rawDigits: ["0","6","0"],     dotSlot: 1, unsimplified: "0.60",   ans: "0.6",    hasTrailingZero: true,  partials: [] },
+    { id: 2,  code: "Q02", type: "一位×一位", expr: "0.3×0.9",   a: "0.3",   b: "0.9",  aDec: 1, bDec: 1, intA: 3,   intB: 9,  intProd: 27,   rawDigits: ["0","2","7"],     dotSlot: 1, unsimplified: "0.27",   ans: "0.27",   hasTrailingZero: false, partials: [] },
+    { id: 3,  code: "Q03", type: "一位×一位", expr: "1.6×0.7",   a: "1.6",   b: "0.7",  aDec: 1, bDec: 1, intA: 16,  intB: 7,  intProd: 112,  rawDigits: ["1","1","2"],     dotSlot: 1, unsimplified: "1.12",   ans: "1.12",   hasTrailingZero: false, partials: [] },
+    { id: 4,  code: "Q04", type: "一位×一位", expr: "2.3×0.4",   a: "2.3",   b: "0.4",  aDec: 1, bDec: 1, intA: 23,  intB: 4,  intProd: 92,   rawDigits: ["0","9","2"],     dotSlot: 1, unsimplified: "0.92",   ans: "0.92",   hasTrailingZero: false, partials: [] },
+    { id: 5,  code: "Q05", type: "一位×一位", expr: "5.9×0.6",   a: "5.9",   b: "0.6",  aDec: 1, bDec: 1, intA: 59,  intB: 6,  intProd: 354,  rawDigits: ["3","5","4"],     dotSlot: 1, unsimplified: "3.54",   ans: "3.54",   hasTrailingZero: false, partials: [] },
+    { id: 6,  code: "Q06", type: "二位×一位", expr: "5.09×0.6",  a: "5.09",  b: "0.6",  aDec: 2, bDec: 1, intA: 509, intB: 6,  intProd: 3054, rawDigits: ["3","0","5","4"], dotSlot: 1, unsimplified: "3.054",  ans: "3.054",  hasTrailingZero: false, partials: [] },
+    { id: 7,  code: "Q07", type: "一位×一位", expr: "7.7×0.2",   a: "7.7",   b: "0.2",  aDec: 1, bDec: 1, intA: 77,  intB: 2,  intProd: 154,  rawDigits: ["1","5","4"],     dotSlot: 1, unsimplified: "1.54",   ans: "1.54",   hasTrailingZero: false, partials: [] },
+    { id: 8,  code: "Q08", type: "一位×一位", expr: "8.9×0.5",   a: "8.9",   b: "0.5",  aDec: 1, bDec: 1, intA: 89,  intB: 5,  intProd: 445,  rawDigits: ["4","4","5"],     dotSlot: 1, unsimplified: "4.45",   ans: "4.45",   hasTrailingZero: false, partials: [] },
+    { id: 9,  code: "Q09", type: "一位×一位", expr: "4.3×0.4",   a: "4.3",   b: "0.4",  aDec: 1, bDec: 1, intA: 43,  intB: 4,  intProd: 172,  rawDigits: ["1","7","2"],     dotSlot: 1, unsimplified: "1.72",   ans: "1.72",   hasTrailingZero: false, partials: [] },
+    { id: 10, code: "Q10", type: "一位×一位", expr: "0.9×0.3",   a: "0.9",   b: "0.3",  aDec: 1, bDec: 1, intA: 9,   intB: 3,  intProd: 27,   rawDigits: ["0","2","7"],     dotSlot: 1, unsimplified: "0.27",   ans: "0.27",   hasTrailingZero: false, partials: [] },
+    { id: 11, code: "Q11", type: "二位×一位", expr: "0.16×0.7",  a: "0.16",  b: "0.7",  aDec: 2, bDec: 1, intA: 16,  intB: 7,  intProd: 112,  rawDigits: ["0","1","1","2"], dotSlot: 1, unsimplified: "0.112",  ans: "0.112",  hasTrailingZero: false, partials: [] },
+    { id: 12, code: "Q12", type: "一位×二位", expr: "2.4×0.19",  a: "2.4",   b: "0.19", aDec: 1, bDec: 2, intA: 24,  intB: 19, intProd: 456,  rawDigits: ["0","4","5","6"], dotSlot: 1, unsimplified: "0.456",  ans: "0.456",  hasTrailingZero: false, partials: ["216", "24\u00A0"] },
+    { id: 13, code: "Q13", type: "二位×一位", expr: "3.06×0.7",  a: "3.06",  b: "0.7",  aDec: 2, bDec: 1, intA: 306, intB: 7,  intProd: 2142, rawDigits: ["2","1","4","2"], dotSlot: 1, unsimplified: "2.142",  ans: "2.142",  hasTrailingZero: false, partials: [] },
+    { id: 14, code: "Q14", type: "二位×一位", expr: "8.12×0.5",  a: "8.12",  b: "0.5",  aDec: 2, bDec: 1, intA: 812, intB: 5,  intProd: 4060, rawDigits: ["4","0","6","0"], dotSlot: 1, unsimplified: "4.060",  ans: "4.06",   hasTrailingZero: true,  partials: [] },
+    { id: 15, code: "Q15", type: "二位×一位", expr: "0.19×0.6",  a: "0.19",  b: "0.6",  aDec: 2, bDec: 1, intA: 19,  intB: 6,  intProd: 114,  rawDigits: ["0","1","1","4"], dotSlot: 1, unsimplified: "0.114",  ans: "0.114",  hasTrailingZero: false, partials: [] },
+    { id: 16, code: "Q16", type: "二位×二位", expr: "0.06×0.07", a: "0.06",  b: "0.07", aDec: 2, bDec: 2, intA: 6,   intB: 7,  intProd: 42,   rawDigits: ["0","0","0","4","2"], dotSlot: 1, unsimplified: "0.0042", ans: "0.0042", hasTrailingZero: false, partials: [] },
+    { id: 17, code: "Q17", type: "二位×二位", expr: "2.04×0.19", a: "2.04",  b: "0.19", aDec: 2, bDec: 2, intA: 204, intB: 19, intProd: 3876, rawDigits: ["0","3","8","7","6"], dotSlot: 1, unsimplified: "0.3876", ans: "0.3876", hasTrailingZero: false, partials: ["1836", "204\u00A0"] },
+    { id: 18, code: "Q18", type: "三位×一位", expr: "0.016×0.8", a: "0.016", b: "0.8",  aDec: 3, bDec: 1, intA: 16,  intB: 8,  intProd: 128,  rawDigits: ["0","0","1","2","8"], dotSlot: 1, unsimplified: "0.0128", ans: "0.0128", hasTrailingZero: false, partials: [] },
+    { id: 19, code: "Q19", type: "三位×一位", expr: "0.102×0.5", a: "0.102", b: "0.5",  aDec: 3, bDec: 1, intA: 102, intB: 5,  intProd: 510,  rawDigits: ["0","0","5","1","0"], dotSlot: 1, unsimplified: "0.0510", ans: "0.051",  hasTrailingZero: true,  partials: [] },
+    { id: 20, code: "Q20", type: "三位×一位", expr: "0.119×0.6", a: "0.119", b: "0.6",  aDec: 3, bDec: 1, intA: 119, intB: 6,  intProd: 714,  rawDigits: ["0","0","7","1","4"], dotSlot: 1, unsimplified: "0.0714", ans: "0.0714", hasTrailingZero: false, partials: [] }
+];
+
+// Whitelist Set for filtering out old unrelated sheet records
+const VALID_EXPR_WHITELIST = new Set();
+MASTER_QUESTIONS.forEach(q => {
+    VALID_EXPR_WHITELIST.add(q.expr);
+    if (q.displayExpr) VALID_EXPR_WHITELIST.add(q.displayExpr);
+    VALID_EXPR_WHITELIST.add(`${q.code}:${q.expr}`);
+});
+
+/********************************************************************
+ * 4. WEB AUDIO API SYNTHESIZER (NO EXTERNAL SOUND FILES)
+ ********************************************************************/
+let audioCtx = null;
+function ensureAudio() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playSound(type) {
+    try {
+        ensureAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        if (type === 'click') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(620, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.055);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+                gain.gain.setValueAtTime(0.18, now + idx * 0.07);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + idx * 0.07);
+                osc.stop(now + idx * 0.07 + 0.26);
+            });
+        } else if (type === 'wrong') {
+            [240, 185].forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+                gain.gain.setValueAtTime(0.14, now + idx * 0.14);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.14 + 0.18);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + idx * 0.14);
+                osc.stop(now + idx * 0.14 + 0.19);
+            });
+        }
+    } catch (e) {}
+}
+
+/********************************************************************
+ * 5. GAME STATE & RANDOMIZED 20-HOLE QUEUE
+ ********************************************************************/
+let currentStudent = "";
+let gameQuestions = [];
+let currentHoleIdx = 0; // 0 to 19
+let selectedSlotIdx = null; // 1 to rawDigits.length - 1
+let struckTrailingZero = false;
+let showRuler = true;
+let showHintHighlights = false;
+let completedHoles = new Set(); // stores hole indices 0..19
+let lastUserAnswerByHole = {};  // holeIdx -> string
+let wrongCountByHole = {};      // holeIdx -> number of wrong attempts before/during solving
+let firstWrongAnsByHole = {};   // holeIdx -> first wrong answer string
+
+// Timer State (5 minutes = 300s)
+let remainingSeconds = 300;
+let timerInterval = null;
+
+// Teacher & Cloud State
+let isTeacherUnlocked = sessionStorage.getItem('mole_teacher_privilege') === '1';
+let isClassroomLocked = false;
+let lastResetTimestamp = Number(localStorage.getItem('mole_last_reset_ts') || 0);
+let pausePollingUntil = 0;
+let cloudRecords = [];
+let selectedStudentForChick = null;
+let currentTeacherSubView = 'progress'; // 'progress' | 'diagnosis'
+
+// S-Curve 20 Hole Coordinates in 760x470 SVG
+const HOLE_COORDS = [];
+(function buildHoleCoords() {
+    const xs = [95, 238, 380, 522, 665];
+    const ys = [110, 205, 305, 405];
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 5; col++) {
+            const x = (row % 2 === 0) ? xs[col] : xs[4 - col];
+            const y = ys[row];
+            HOLE_COORDS.push({ x, y, num: row * 5 + col + 1 });
+        }
+    }
+})();
+
+function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
+/**
+ * 全 20 道題完全隨機打亂（Fisher-Yates Shuffle），不再按固定階段順序排列，
+ * 徹底防止學生靠順序猜測小數點位數！
+ */
+function buildRandomized20Questions() {
+    gameQuestions = shuffleArray(MASTER_QUESTIONS);
+}
+
+/********************************************************************
+ * 6. INITIALIZATION & UI RENDERING
+ ********************************************************************/
+function initStudentDropdown() {
+    const sel = document.getElementById('studentSelect');
+    STUDENT_ROSTER.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => {
+        playSound('click');
+        currentStudent = sel.value;
+        resetStudentProgress();
+    });
+}
+
+function resetStudentProgress() {
+    buildRandomized20Questions();
+    currentHoleIdx = 0;
+    selectedSlotIdx = null;
+    struckTrailingZero = false;
+    showHintHighlights = false;
+    completedHoles.clear();
+    lastUserAnswerByHole = {};
+    wrongCountByHole = {};
+    firstWrongAnsByHole = {};
+    remainingSeconds = 300;
+    updateTimerUI();
+    renderAll();
+}
+
+function startCountdownTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (!currentStudent || isClassroomLocked) return;
+        if (completedHoles.size >= 20) return;
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            updateTimerUI();
+        }
+    }, 1000);
+}
+
+function updateTimerUI() {
+    const badge = document.getElementById('timerBadge');
+    const mins = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+    const secs = String(remainingSeconds % 60).padStart(2, '0');
+    badge.textContent = `⏱️ ${mins}:${secs}`;
+    if (remainingSeconds <= 60 && remainingSeconds > 0) {
+        badge.classList.add('urgent');
+    } else {
+        badge.classList.remove('urgent');
+    }
+}
+
+function drawTunnelPath() {
+    let d = `M ${HOLE_COORDS[0].x} ${HOLE_COORDS[0].y}`;
+    for (let i = 1; i < HOLE_COORDS.length; i++) {
+        d += ` L ${HOLE_COORDS[i].x} ${HOLE_COORDS[i].y}`;
+    }
+    document.getElementById('tunnelOuter').setAttribute('d', d);
+    document.getElementById('tunnelInner').setAttribute('d', d);
+    document.getElementById('tunnelDash').setAttribute('d', d);
+}
+
+function renderMazeHolesAndMole(animatePop = true) {
+    const holesLayer = document.getElementById('holesLayer');
+    const moleLayer = document.getElementById('moleLayer');
+    holesLayer.innerHTML = '';
+    moleLayer.innerHTML = '';
+
+    const curQ = gameQuestions[currentHoleIdx];
+    const eqDisplay = curQ.displayExpr || curQ.expr;
+
+    HOLE_COORDS.forEach((pt, idx) => {
+        const isDone = completedHoles.has(idx);
+        const isCurrent = (idx === currentHoleIdx);
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.style.cursor = 'pointer';
+        g.addEventListener('click', () => {
+            playSound('click');
+            currentHoleIdx = idx;
+            selectedSlotIdx = null;
+            struckTrailingZero = false;
+            showHintHighlights = false;
+            renderAll();
+        });
+
+        // Outer Hole Rim
+        const outerEllipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        outerEllipse.setAttribute('cx', pt.x);
+        outerEllipse.setAttribute('cy', pt.y);
+        outerEllipse.setAttribute('rx', isCurrent ? '37' : '33');
+        outerEllipse.setAttribute('ry', isCurrent ? '16' : '14');
+        outerEllipse.setAttribute('fill', isDone ? '#059669' : 'url(#holeRim)');
+        outerEllipse.setAttribute('stroke', isCurrent ? '#fde047' : (isDone ? '#34d399' : '#451a03'));
+        outerEllipse.setAttribute('stroke-width', isCurrent ? '3.5' : '2');
+        g.appendChild(outerEllipse);
+
+        // Inner Dark Pit
+        const innerEllipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        innerEllipse.setAttribute('cx', pt.x);
+        innerEllipse.setAttribute('cy', pt.y);
+        innerEllipse.setAttribute('rx', '25');
+        innerEllipse.setAttribute('ry', '9.5');
+        innerEllipse.setAttribute('fill', 'url(#holeDark)');
+        g.appendChild(innerEllipse);
+
+        // Trophy on Hole 20
+        if (idx === 19) {
+            const trophy = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            trophy.setAttribute('x', pt.x - 35);
+            trophy.setAttribute('y', pt.y - 6);
+            trophy.setAttribute('font-size', '20');
+            trophy.textContent = '🏆';
+            g.appendChild(trophy);
+        }
+
+        // Pill Label Below Hole
+        const pillRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        pillRect.setAttribute('x', pt.x - 24);
+        pillRect.setAttribute('y', pt.y + 11);
+        pillRect.setAttribute('width', '48');
+        pillRect.setAttribute('height', '18');
+        pillRect.setAttribute('rx', '9');
+        pillRect.setAttribute('fill', isDone ? '#10b981' : '#fef3c7');
+        pillRect.setAttribute('stroke', isDone ? '#047857' : '#92400e');
+        pillRect.setAttribute('stroke-width', '1.5');
+        g.appendChild(pillRect);
+
+        const pillText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        pillText.setAttribute('x', pt.x);
+        pillText.setAttribute('y', pt.y + 24);
+        pillText.setAttribute('text-anchor', 'middle');
+        pillText.setAttribute('font-size', '11');
+        pillText.setAttribute('font-weight', '900');
+        pillText.setAttribute('fill', isDone ? '#ffffff' : '#78350f');
+        pillText.textContent = isDone ? `✓${pt.num}` : `第${pt.num}洞`;
+        g.appendChild(pillText);
+
+        holesLayer.appendChild(g);
+    });
+
+    // Draw Mole & Speech Bubble on Current Hole
+    const activePt = HOLE_COORDS[currentHoleIdx];
+    const moleGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    if (animatePop) moleGroup.setAttribute('class', 'mole-pop');
+
+    const mx = activePt.x;
+    const my = activePt.y;
+
+    // Bubble Position (Keep within SVG bounds)
+    const bx = Math.max(85, Math.min(675, mx));
+    const by = my - 56;
+
+    moleGroup.innerHTML = `
+        <!-- Mole Body & Hardhat -->
+        <g transform="translate(${mx}, ${my - 4})">
+            <!-- Mole Brown Body -->
+            <path d="M -18 6 C -18 -18, 18 -18, 18 6 Z" fill="#854d0e" stroke="#451a03" stroke-width="2"/>
+            <!-- Belly/Cheeks -->
+            <ellipse cx="-8" cy="-1" rx="4" ry="2.5" fill="#f43f5e" opacity="0.6"/>
+            <ellipse cx="8" cy="-1" rx="4" ry="2.5" fill="#f43f5e" opacity="0.6"/>
+            <!-- Eyes -->
+            <circle cx="-6" cy="-5" r="2.3" fill="#1c1917"/>
+            <circle cx="6" cy="-5" r="2.3" fill="#1c1917"/>
+            <!-- Pink Nose -->
+            <ellipse cx="0" cy="-2" rx="3.8" ry="2.6" fill="#fb7185"/>
+            <!-- Paws on Rim -->
+            <ellipse cx="-14" cy="6" rx="4.5" ry="3" fill="#fcd34d" stroke="#78350f" stroke-width="1.2"/>
+            <ellipse cx="14" cy="6" rx="4.5" ry="3" fill="#fcd34d" stroke="#78350f" stroke-width="1.2"/>
+            <!-- Yellow Miner Hardhat -->
+            <path d="M -17 -10 C -15 -24, 15 -24, 17 -10 Z" fill="#facc15" stroke="#a16207" stroke-width="1.8"/>
+            <rect x="-20" y="-11" width="40" height="4" rx="2" fill="#eab308" stroke="#a16207" stroke-width="1.2"/>
+            <circle cx="0" cy="-16" r="3.5" fill="#fef08a" stroke="#ca8a04" stroke-width="1.2"/>
+        </g>
+
+        <!-- Speech Bubble Above Mole -->
+        <g class="bubble-float" filter="url(#dropShadow)">
+            <rect x="${bx - 68}" y="${by - 22}" width="136" height="32" rx="11" fill="#ffffff" stroke="#f59e0b" stroke-width="2.5"/>
+            <polygon points="${mx - 6},${by + 10} ${mx + 6},${by + 10} ${mx},${by + 18}" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+            <text x="${bx}" y="${by - 1}" text-anchor="middle" font-size="13.5" font-weight="900" fill="#1e293b">
+                ${eqDisplay.replace('×', ' × ')} = ?
+            </text>
+        </g>
+    `;
+    moleLayer.appendChild(moleGroup);
+}
+
+/**
+ * 將小數或整數拆分為「右對齊方格座標」：
+ * - 每個數字佔用對應的 digitCol (從右數起 dIdx = 0, 1, 2...)
+ * - 小數點佔用兩個數字中間的 slotCol
+ */
+function parseNumberToGridCells(numStr, highlightClass, N) {
+    const clean = numStr.replace(/\u00A0/g, ' ');
+    const dotPos = clean.indexOf('.');
+    const digitsOnly = clean.replace('.', '').split('');
+    const L = digitsOnly.length;
+    const cells = [];
+
+    // Place each digit right-aligned into digit column: col = 2 + 2*(N - L + i)
+    digitsOnly.forEach((ch, i) => {
+        if (ch === ' ') return;
+        const col = 2 + 2 * (N - L + i);
+        const isDecimalPart = (dotPos !== -1) && (i >= dotPos);
+        const hl = (showHintHighlights && isDecimalPart && highlightClass) ? ` ${highlightClass}` : '';
+        cells.push({
+            col,
+            html: `<div class="v-grid-digit${hl}">${ch}</div>`
+        });
+    });
+
+    // Place decimal point in the gap column between integer and decimal digits
+    if (dotPos !== -1) {
+        const dotCol = 2 + 2 * (N - L + dotPos) - 1;
+        if (dotCol >= 2) {
+            cells.push({
+                col: dotCol,
+                html: `<div class="v-grid-dot">.</div>`
+            });
+        }
+    }
+    return cells;
+}
+
+function computePreviewAnswer(q) {
+    if (selectedSlotIdx === null) return null;
+    const digits = [...q.rawDigits];
+    const leftPart = digits.slice(0, selectedSlotIdx).join('');
+    let rightPart = digits.slice(selectedSlotIdx).join('');
+    if (struckTrailingZero && rightPart.endsWith('0')) {
+        rightPart = rightPart.slice(0, -1);
+    }
+    // Clean unnecessary extra leading zeros on integer part (keep at least one digit before decimal point)
+    const normalizedLeft = leftPart.replace(/^0+(?=\d)/, '');
+    return `${normalizedLeft}.${rightPart}`;
+}
+
+function renderRightChallengeCard() {
+    const q = gameQuestions[currentHoleIdx];
+    const eqDisplay = q.displayExpr || q.expr;
+
+    // 1. Update Top Header & Stage Pill (Do not leak decimal places in title!)
+    document.getElementById('holeBadge').textContent = `目的地洞 (${currentHoleIdx + 1}/20)`;
+    const stagePill = document.getElementById('stagePillText');
+    stagePill.textContent = `🎲 隨機挑戰模式：第 ${currentHoleIdx + 1} / 20 洞`;
+
+    // 2. Update Adventure Progress Bar
+    const doneCount = completedHoles.size;
+    document.getElementById('advFillBar').style.width = `${(doneCount / 20) * 100}%`;
+    document.getElementById('advCountText').textContent = `${doneCount}/20`;
+
+    // 3. Update Banner Formula
+    document.getElementById('bannerFormulaText').innerHTML = `${eqDisplay.replace('×', ' × ')} = <span class="q-mark">?</span>`;
+
+    // 4. Build Unified Right-Aligned CSS Grid (Multiplicand, Multiplier, Partials, Product & Slots)
+    const gridEl = document.getElementById('unifiedCalcGrid');
+    if (showRuler) {
+        gridEl.classList.remove('hide-ruler');
+    } else {
+        gridEl.classList.add('hide-ruler');
+    }
+    gridEl.innerHTML = '';
+
+    const N = q.rawDigits.length; // Total digit columns (3 to 5)
+    // Column 1: Left Role Tag / Multiply Sign
+    // Columns 2 .. 2*N: Alternating [Digit Col (34px)] and [Slot/Dot Col (32px)]
+    const colTracks = ['auto'];
+    for (let i = 0; i < N; i++) {
+        colTracks.push('clamp(28px, 3.6vh, 36px)'); // Digit column
+        if (i < N - 1) {
+            colTracks.push('clamp(28px, 3.5vh, 34px)'); // Dot / Circle slot column
+        }
+    }
+    gridEl.style.gridTemplateColumns = colTracks.join(' ');
+
+    let currentRow = 1;
+
+    // Helper to append a cell at (row, col)
+    function addGridCell(row, col, innerHTML, className = '') {
+        const div = document.createElement('div');
+        if (className) div.className = className;
+        div.style.gridRow = String(row);
+        div.style.gridColumn = String(col);
+        div.innerHTML = innerHTML;
+        gridEl.appendChild(div);
+        return div;
+    }
+
+    // --- Row 1: Multiplicand (被乘數) ---
+    addGridCell(currentRow, 1, `<span class="v-role-tag">被乘數</span>`, 'v-role-cell');
+    parseNumberToGridCells(q.a, 'v-dec-highlight-a', N).forEach(cell => {
+        addGridCell(currentRow, cell.col, cell.html);
+    });
+    currentRow++;
+
+    // --- Row 2: Multiplier (× 乘數) ---
+    addGridCell(currentRow, 1, `<span class="v-op-sign">×</span><span class="v-role-tag">乘數</span>`, 'v-role-cell');
+    parseNumberToGridCells(q.b, 'v-dec-highlight-b', N).forEach(cell => {
+        addGridCell(currentRow, cell.col, cell.html);
+    });
+    currentRow++;
+
+    // --- Row 3: Yellow Divider ---
+    const yellowLine = document.createElement('div');
+    yellowLine.className = 'v-yellow-divider';
+    yellowLine.style.gridRow = String(currentRow);
+    gridEl.appendChild(yellowLine);
+    currentRow++;
+
+    // --- Optional Partial Products Rows (e.g. 2.4 × 0.19, 2.04 × 0.19) ---
+    if (q.partials && q.partials.length > 0) {
+        q.partials.forEach(pStr => {
+            const chars = pStr.replace(/\u00A0/g, ' ').split('');
+            const pLen = chars.length;
+            chars.forEach((ch, i) => {
+                if (ch === ' ') return;
+                const col = 2 + 2 * (N - pLen + i);
+                addGridCell(currentRow, col, `<div class="v-grid-partial-digit">${ch}</div>`);
+            });
+            currentRow++;
+        });
+        const whiteLine = document.createElement('div');
+        whiteLine.className = 'v-white-divider';
+        whiteLine.style.gridRow = String(currentRow);
+        gridEl.appendChild(whiteLine);
+        currentRow++;
+    }
+
+    // --- Final Row: Interactive Product Digits & Dashed Circle Slots ---
+    const prodBackdrop = document.createElement('div');
+    prodBackdrop.className = 'v-prod-backdrop';
+    prodBackdrop.style.gridRow = String(currentRow);
+    prodBackdrop.style.gridColumn = `2 / ${2 * N + 1}`;
+    gridEl.appendChild(prodBackdrop);
+
+    q.rawDigits.forEach((dChar, idx) => {
+        const digitCol = 2 + 2 * idx;
+        const isLastZero = (idx === N - 1 && dChar === '0' && q.hasTrailingZero);
+
+        const dCol = document.createElement('div');
+        dCol.className = 'prod-digit-col';
+        dCol.style.gridRow = String(currentRow);
+        dCol.style.gridColumn = String(digitCol);
+
+        const dSpan = document.createElement('div');
+        dSpan.className = 'prod-digit-char' + (isLastZero && struckTrailingZero ? ' struck-zero' : '');
+        dSpan.textContent = dChar;
+        if (isLastZero) {
+            dSpan.title = "點擊可劃去或恢復小數末尾的 0";
+            dSpan.addEventListener('click', () => {
+                playSound('click');
+                struckTrailingZero = !struckTrailingZero;
+                renderRightChallengeCard();
+            });
+        }
+        dCol.appendChild(dSpan);
+        gridEl.appendChild(dCol);
+
+        // Place interactive circle slot in the exact gap column (digitCol + 1)
+        if (idx < N - 1) {
+            const slotIndex = idx + 1;
+            const slotCol = digitCol + 1;
+            const placesFromRight = N - slotIndex;
+            const isSelected = (selectedSlotIdx === slotIndex);
+
+            const sCol = document.createElement('div');
+            sCol.className = 'slot-col' + (isSelected ? ' selected-col' : '');
+            sCol.style.gridRow = String(currentRow);
+            sCol.style.gridColumn = String(slotCol);
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'circle-slot-btn' + (isSelected ? ' selected' : '');
+            btn.setAttribute('aria-label', `從右往左第 ${placesFromRight} 位小數點`);
+            btn.innerHTML = `<span class="inner-dot"></span>`;
+            btn.addEventListener('click', () => {
+                playSound('click');
+                selectedSlotIdx = slotIndex;
+                renderRightChallengeCard();
+            });
+
+            const rulerLbl = document.createElement('div');
+            rulerLbl.className = 'slot-ruler-label';
+            rulerLbl.textContent = `${placesFromRight}位`;
+
+            sCol.appendChild(btn);
+            sCol.appendChild(rulerLbl);
+            gridEl.appendChild(sCol);
+        }
+    });
+
+    // 5. Update Chalkboard Status & Picked Result Badges
+    const statusPill = document.getElementById('chalkStatusPill');
+    const pickedBadge = document.getElementById('pickedResultBadge');
+    const countBadge = document.getElementById('countPlacesBadge');
+
+    if (selectedSlotIdx === null) {
+        statusPill.textContent = '尚未點選小數點';
+        statusPill.classList.remove('active');
+        pickedBadge.textContent = '請點擊上方圓圈 ●';
+        countBadge.textContent = '-- 位小數';
+    } else {
+        const places = N - selectedSlotIdx;
+        const previewStr = computePreviewAnswer(q);
+        statusPill.textContent = '已點選小數點';
+        statusPill.classList.add('active');
+        pickedBadge.textContent = previewStr;
+        countBadge.textContent = `${places} 位小數`;
+    }
+}
+
+function setMolePrompt(mode, htmlText) {
+    const box = document.getElementById('molePromptBox');
+    const txt = document.getElementById('molePromptText');
+    box.classList.remove('warn-mode', 'ok-mode');
+    if (mode === 'warn') box.classList.add('warn-mode');
+    if (mode === 'ok') box.classList.add('ok-mode');
+    txt.innerHTML = htmlText;
+}
+
+function renderAll(animateMole = true) {
+    renderMazeHolesAndMole(animateMole);
+    renderRightChallengeCard();
+    const q = gameQuestions[currentHoleIdx];
+    if (!showHintHighlights) {
+        setMolePrompt(
+            'normal',
+            `第 ${currentHoleIdx + 1} 洞：請觀察直式中「被乘數」和「乘數」各有幾個小數位，再點擊最下方積的圓圈放入小數點！`
+        );
+    }
+}
+
+/********************************************************************
+ * 7. ANSWER VERIFICATION & NON-SPOILER DIAGNOSTIC FEEDBACK
+ ********************************************************************/
+function handleConfirmDecimalPoint() {
+    playSound('click');
+
+    // 1. Intercept if student name is not selected
+    if (!currentStudent) {
+        showWarmModal(
+            "請先選擇挑戰者姓名！",
+            "請先在畫面左上角「挑戰者：」下拉選單選擇你的名字，再開始闖關喔！"
+        );
+        return;
+    }
+
+    const q = gameQuestions[currentHoleIdx];
+    const totalDigits = q.rawDigits.length;
+    const expectedPlaces = q.aDec + q.bDec;
+
+    // 2. Diagnosis A: Forgot to place the decimal point
+    if (selectedSlotIdx === null) {
+        playSound('wrong');
+        triggerWrongShake();
+        showHintHighlights = true;
+        wrongCountByHole[currentHoleIdx] = (wrongCountByHole[currentHoleIdx] || 0) + 1;
+        if (!firstWrongAnsByHole[currentHoleIdx]) {
+            firstWrongAnsByHole[currentHoleIdx] = "未點小數點";
+        }
+        renderRightChallengeCard();
+        const diagMsg = "診斷 A：忘記點小數點";
+        uploadAttemptRecord(q, "未點小數點", "錯誤", diagMsg);
+        setMolePrompt(
+            'warn',
+            `⚠️ 你還沒有點選小數點喔！請觀察上方高亮標示的小數位，在最下方積的圓圈中點上小數點。`
+        );
+        showWarmModal(
+            diagMsg,
+            `你還沒有在最下方的積點上小數點喔！<br><br>🔎 <b>小提示</b>：被乘數 <b>${q.a}</b> 有 <b>${q.aDec}</b> 個小數位，乘數 <b>${q.b}</b> 有 <b>${q.bDec}</b> 個小數位，請先點選數字之間的虛線圓圈放入小數點！`
+        );
+        return;
+    }
+
+    const chosenPlaces = totalDigits - selectedSlotIdx;
+    const userPreview = computePreviewAnswer(q);
+    lastUserAnswerByHole[currentHoleIdx] = userPreview;
+
+    // 3. Check if chosen decimal places equals aDec + bDec
+    if (chosenPlaces === expectedPlaces) {
+        // Correct!
+        playSound('correct');
+        completedHoles.add(currentHoleIdx);
+        showHintHighlights = false;
+        uploadAttemptRecord(q, q.ans, "正確", "定位正確");
+
+        if (q.hasTrailingZero) {
+            setMolePrompt(
+                'ok',
+                `🎉 答對了！從右往左數 ${expectedPlaces} 位點上小數點得到 <b>${q.unsimplified}</b>，小數末尾的 0 省略化簡後就是 <b>${q.ans}</b>！`
+            );
+        } else {
+            setMolePrompt(
+                'ok',
+                `🎉 太棒了！小數點定位完全正確（${q.a} × ${q.b} = ${q.ans}），鑽地鼠正鑽往下一個地洞！`
+            );
+        }
+
+        renderRightChallengeCard();
+        renderMazeHolesAndMole(false);
+
+        // Animate mole ducking and popping out at next uncompleted hole
+        setTimeout(() => {
+            if (completedHoles.size < 20) {
+                let nextIdx = (currentHoleIdx + 1) % 20;
+                for (let step = 0; step < 20; step++) {
+                    const candidate = (currentHoleIdx + 1 + step) % 20;
+                    if (!completedHoles.has(candidate)) {
+                        nextIdx = candidate;
+                        break;
+                    }
+                }
+                currentHoleIdx = nextIdx;
+                selectedSlotIdx = null;
+                struckTrailingZero = false;
+                renderAll(true);
+            } else {
+                renderMazeHolesAndMole(true);
+                showWarmModal(
+                    "🏆 恭喜完成全部 20 個地洞挑戰！",
+                    `太厲害了 <b>${currentStudent}</b>！你已經完全掌握「積的小數位數等於被乘數與乘數小數位數之和」的法則！可點擊右上角「📋 成績」查看完整解鎖報告。`
+                );
+            }
+        }, 700);
+
+    } else {
+        // 4. Wrong slot selected -> Non-spoiler heuristic hint (Diagnosis B / C)
+        playSound('wrong');
+        triggerWrongShake();
+        showHintHighlights = true;
+        wrongCountByHole[currentHoleIdx] = (wrongCountByHole[currentHoleIdx] || 0) + 1;
+        if (!firstWrongAnsByHole[currentHoleIdx]) {
+            firstWrongAnsByHole[currentHoleIdx] = userPreview;
+        }
+        renderRightChallengeCard();
+
+        let diagType = "診斷 B：小數點位置移錯";
+        let extraTip = "";
+        if (q.hasTrailingZero && chosenPlaces === expectedPlaces - 1) {
+            diagType = "診斷 C：小數末尾 0 需先定位再化簡";
+            extraTip = `<br><br>⚠️ <b>特別注意</b>：這題整數相乘的積末尾有 <b>0</b>，定位時必須<b>連同最右邊的 0 一起從右往左數</b>，先點好小數點再化簡末尾的 0 喔！`;
+        }
+
+        uploadAttemptRecord(q, userPreview, "錯誤", diagType);
+
+        const promptCopy = `再數一數喔！被乘數有 <b>${q.aDec}</b> 個小數位，乘數有 <b>${q.bDec}</b> 個小數位，合起來積應該要有幾個小數位呢？試著從最右邊往左數！`;
+        setMolePrompt('warn', `💡 ${promptCopy}`);
+
+        showWarmModal(
+            diagType,
+            `${promptCopy}${extraTip}`
+        );
+    }
+}
+
+function triggerWrongShake() {
+    const panel = document.getElementById('rightControlPanel');
+    panel.classList.remove('shake-anim');
+    void panel.offsetWidth;
+    panel.classList.add('shake-anim');
+}
+
+function showWarmModal(subtitle, bodyHTML) {
+    document.getElementById('hintDiagTitle').textContent = subtitle;
+    document.getElementById('hintBodyText').innerHTML = bodyHTML;
+    document.getElementById('warmHintModal').classList.add('show');
+}
+
+/********************************************************************
+ * 8. STUDENT SCORE REPORT MODAL (WITH SPOILER PROTECTION & RETRY HIGHLIGHT)
+ ********************************************************************/
+function openStudentReportModal() {
+    playSound('click');
+    document.getElementById('reportStudentName').textContent = `挑戰者：${currentStudent || '未選擇'}`;
+    document.getElementById('reportProgressSummary').textContent = `已解鎖地洞：${completedHoles.size} / 20 題`;
+
+    const tbody = document.getElementById('reportTableBody');
+    tbody.innerHTML = '';
+
+    gameQuestions.forEach((q, idx) => {
+        const isPassed = completedHoles.has(idx);
+        const wrongCnt = wrongCountByHole[idx] || 0;
+        const firstWrong = firstWrongAnsByHole[idx] || '';
+        const userAns = lastUserAnswerByHole[idx] || '—';
+
+        // 統一背景色區分：
+        // 1. 曾答錯後改正做對 -> 溫暖琥珀橘黃色背景 (#fef3c7)
+        // 2. 一次直接答對 -> 清爽翠綠色背景 (#ecfdf5)
+        // 3. 曾答錯但尚未訂正過關 -> 淺粉紅提醒背景 (#fff1f2)
+        // 4. 尚未作答 -> 白色背景 (#ffffff)
+        let rowBg = '#ffffff';
+        let statusHtml = '<span style="color:#d97706;">⏳ 待挑戰</span>';
+        let userRecordHtml = userAns;
+
+        if (isPassed && wrongCnt > 0) {
+            rowBg = '#fef3c7'; // 統一用琥珀黃背景色標示「曾錯後改正做對」
+            statusHtml = `<span style="color:#b45309;background:#fde68a;padding:2px 8px;border-radius:6px;border:1px solid #f59e0b;">🛠️ 曾錯後改正 (錯 ${wrongCnt} 次)</span>`;
+            userRecordHtml = `<span style="color:#dc2626;text-decoration:line-through;margin-right:6px;">${firstWrong}</span>➔ <b style="color:#059669;">${userAns}</b>`;
+        } else if (isPassed && wrongCnt === 0) {
+            rowBg = '#ecfdf5'; // 一次答對
+            statusHtml = `<span style="color:#059669;">✅ 一次答對</span>`;
+            userRecordHtml = `<b style="color:#059669;">${userAns}</b>`;
+        } else if (!isPassed && wrongCnt > 0) {
+            rowBg = '#fff1f2';
+            statusHtml = `<span style="color:#e11d48;">⚠️ 待訂正 (已錯 ${wrongCnt} 次)</span>`;
+            userRecordHtml = `<span style="color:#e11d48;">${userAns}</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #ddd6fe';
+        tr.style.backgroundColor = rowBg;
+        tr.innerHTML = `
+            <td style="padding:9px 8px;">第 ${idx + 1} 洞</td>
+            <td class="mono-num" style="padding:9px 8px;font-size:15px;">${q.displayExpr || q.expr}</td>
+            <td style="padding:9px 8px;">${statusHtml}</td>
+            <td class="mono-num" style="padding:9px 8px;">${userRecordHtml}</td>
+            <td class="mono-num" style="padding:9px 8px;color:${isPassed ? '#1d4ed8' : '#64748b'};">
+                ${isPassed ? q.ans : '🔒 待闖關解鎖'}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('reportModal').classList.add('show');
+}
+
+/********************************************************************
+ * 9. GOOGLE SHEET & GAS SYNC + ANTI-RESIDUAL FILTERING
+ ********************************************************************/
+function formatNowTime() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function uploadAttemptRecord(q, studentAns, resultStr, diagStr) {
+    const recordObj = {
+        timestamp: Date.now(),
+        timeStr: formatNowTime(),
+        student: currentStudent,
+        type: q.type,
+        question: `${q.code}:${q.expr}`,
+        exprOnly: q.expr,
+        studentAns: String(studentAns),
+        result: resultStr,
+        diagnosis: diagStr
+    };
+
+    // Always update local session cache for immediate responsiveness
+    cloudRecords.push(recordObj);
+
+    // Do not write to Google Sheet if student is "35 訪客"
+    if (!currentStudent || currentStudent.includes("訪客")) return;
+
+    const payload = {
+        action: "append",
+        sheetId: SHEET_ID,
+        sheetName: DATA_SHEET_NAME,
+        time: recordObj.timeStr,
+        student: recordObj.student,
+        type: recordObj.type,
+        question: recordObj.question,
+        answer: recordObj.studentAns,
+        result: recordObj.result,
+        diagnosis: recordObj.diagnosis
+    };
+
+    fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+    }).catch(() => {});
+}
+
+async function pollCloudData(manual = false) {
+    if (Date.now() < pausePollingUntil && !manual) return;
+    const statusEl = document.getElementById('tdSyncStatusText');
+    if (statusEl && manual) statusEl.textContent = "🔄 正在與 Google Sheet 同步...";
+
+    try {
+        const url = `${GAS_URL}?action=readAll&sheetId=${encodeURIComponent(SHEET_ID)}&sheetName=${encodeURIComponent(DATA_SHEET_NAME)}&t=${Date.now()}`;
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+
+        // 1. Classroom Lock State (data1!A1: open / closed)
+        if (data && typeof data.lockStatus === 'string') {
+            isClassroomLocked = (data.lockStatus.trim().toLowerCase() === 'closed');
+            applyClassroomLockUI();
+        }
+
+        // 2. Filter rows with strict 20-question Whitelist & Reset Timestamp
+        if (data && Array.isArray(data.rows)) {
+            const parsed = [];
+            data.rows.forEach(r => {
+                // r can be array [time, student, type, question, answer, result, diagnosis] or object
+                const timeStr = Array.isArray(r) ? r[0] : (r.time || r.timestamp || "");
+                const student = String(Array.isArray(r) ? r[1] : (r.student || "")).trim();
+                const qType   = String(Array.isArray(r) ? r[2] : (r.type || "")).trim();
+                const qRaw    = String(Array.isArray(r) ? r[3] : (r.question || "")).trim();
+                const sAns    = String(Array.isArray(r) ? r[4] : (r.answer || "")).trim();
+                const resStr  = String(Array.isArray(r) ? r[5] : (r.result || "")).trim();
+                const diagStr = String(Array.isArray(r) ? r[6] : (r.diagnosis || "")).trim();
+
+                const exprClean = qRaw.includes(':') ? qRaw.split(':')[1].trim() : qRaw;
+                if (!VALID_EXPR_WHITELIST.has(qRaw) && !VALID_EXPR_WHITELIST.has(exprClean)) {
+                    return; // Ignore non-whitelisted questions from other units
+                }
+
+                const rowTs = Date.parse(String(timeStr).replace(/\//g, '-')) || 0;
+                if (lastResetTimestamp > 0 && rowTs > 0 && rowTs <= lastResetTimestamp) {
+                    return; // Ignore records older than or equal to reset timestamp
+                }
+
+                parsed.push({
+                    timestamp: rowTs || Date.now(),
+                    timeStr: String(timeStr),
+                    student,
+                    type: qType,
+                    question: qRaw,
+                    exprOnly: exprClean,
+                    studentAns: sAns,
+                    result: resStr,
+                    diagnosis: diagStr
+                });
+            });
+            cloudRecords = parsed;
+        }
+        if (statusEl) statusEl.textContent = `✅ 雲端已同步 (${new Date().toLocaleTimeString('zh-HK', { hour12: false })})`;
+    } catch (e) {
+        if (statusEl) statusEl.textContent = "⚠️ 離線或雲端連線忙碌中（使用本機即時紀錄）";
+    }
+
+    if (document.getElementById('teacherModal').classList.contains('show')) {
+        renderTeacherDashboard();
+    }
+}
+
+function applyClassroomLockUI() {
+    const overlay = document.getElementById('classroomLockOverlay');
+    const lockBtn = document.getElementById('btnTdToggleLock');
+    const goldBadge = document.getElementById('teacherGoldBadge');
+
+    goldBadge.style.display = isTeacherUnlocked ? 'inline-flex' : 'none';
+
+    if (isClassroomLocked && !isTeacherUnlocked) {
+        overlay.classList.add('locked');
+    } else {
+        overlay.classList.remove('locked');
+    }
+
+    if (lockBtn) {
+        if (isClassroomLocked) {
+            lockBtn.textContent = "🔓 開放課堂作答";
+            lockBtn.classList.add('open-mode');
+        } else {
+            lockBtn.textContent = "🔒 一鍵鎖定課堂";
+            lockBtn.classList.remove('open-mode');
+        }
+    }
+}
+
+/********************************************************************
+ * 10. STEALTH PASSWORD PAD (400351) & TEACHER DASHBOARD RENDERING
+ ********************************************************************/
+let currentPwdInput = "";
+const TEACHER_PASSCODE = "400351";
+
+function openPasswordModal() {
+    playSound('click');
+    if (isTeacherUnlocked) {
+        openTeacherDashboardModal();
+        return;
+    }
+    currentPwdInput = "";
+    updatePwdSlotsUI();
+    document.getElementById('pwdErrorMsg').textContent = "";
+    document.getElementById('pwdModal').classList.add('show');
+}
+
+function updatePwdSlotsUI() {
+    const slots = document.querySelectorAll('#pwdSlots .pwd-slot');
+    slots.forEach((slot, idx) => {
+        slot.textContent = idx < currentPwdInput.length ? "*" : "";
+    });
+}
+
+function handlePwdKey(keyVal) {
+    if (keyVal === "CLOSE") {
+        document.getElementById('pwdModal').classList.remove('show');
+        return;
+    }
+    if (keyVal === "CLR") {
+        currentPwdInput = "";
+        document.getElementById('pwdErrorMsg').textContent = "";
+        updatePwdSlotsUI();
+        return;
+    }
+    if (currentPwdInput.length < 6) {
+        currentPwdInput += keyVal;
+        updatePwdSlotsUI();
+        if (currentPwdInput.length === 6) {
+            if (currentPwdInput === TEACHER_PASSCODE) {
+                isTeacherUnlocked = true;
+                sessionStorage.setItem('mole_teacher_privilege', '1');
+                applyClassroomLockUI();
+                document.getElementById('pwdModal').classList.remove('show');
+                openTeacherDashboardModal();
+            } else {
+                playSound('wrong');
+                document.getElementById('pwdErrorMsg').textContent = "密碼錯誤，請重新輸入";
+                currentPwdInput = "";
+                updatePwdSlotsUI();
+            }
+        }
+    }
+}
+
+function openTeacherDashboardModal() {
+    updateTeacherClock();
+    renderTeacherDashboard();
+    document.getElementById('teacherModal').classList.add('show');
+    pollCloudData(true);
+}
+
+function updateTeacherClock() {
+    const dateEl = document.getElementById('tdDateStr');
+    const timeEl = document.getElementById('tdTimeStr');
+    if (!dateEl || !timeEl) return;
+    const now = new Date();
+    const days = ['日', '一', '二', '三', '四', '五', '六'];
+    dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 星期${days[now.getDay()]}`;
+    const pad = n => String(n).padStart(2, '0');
+    timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
+function renderTeacherDashboard() {
+    const official34 = STUDENT_ROSTER.slice(0, 34); // Exclude "35 訪客"
+    const studentStats = {};
+    official34.forEach(name => {
+        studentStats[name] = {
+            correctSet: new Set(),
+            attempts: 0,
+            lastCorrectTimeStr: "",
+            lastCorrectTs: 0
+        };
+    });
+
+    const diagMap = {};
+    MASTER_QUESTIONS.forEach(q => {
+        diagMap[q.expr] = {
+            q,
+            wrongCount: 0,
+            totalCount: 0,
+            wrongStudents: new Map()
+        };
+    });
+
+    cloudRecords.forEach(rec => {
+        const sName = rec.student;
+        const expr = rec.exprOnly;
+        const isCorrect = (rec.result === "正確");
+
+        if (studentStats[sName]) {
+            studentStats[sName].attempts++;
+            if (isCorrect) {
+                const prevSize = studentStats[sName].correctSet.size;
+                studentStats[sName].correctSet.add(expr);
+                if (studentStats[sName].correctSet.size > prevSize || rec.timestamp >= studentStats[sName].lastCorrectTs) {
+                    studentStats[sName].lastCorrectTs = rec.timestamp;
+                    studentStats[sName].lastCorrectTimeStr = (rec.timeStr.split(' ')[1] || rec.timeStr);
+                }
+            }
+        }
+
+        if (diagMap[expr]) {
+            diagMap[expr].totalCount++;
+            if (!isCorrect) {
+                diagMap[expr].wrongCount++;
+                diagMap[expr].wrongStudents.set(sName, rec.studentAns);
+            }
+        }
+    });
+
+    // 1. Attendance & Class Average Calculation
+    let presentCount = 0;
+    let totalCorrectSum = 0;
+    official34.forEach(name => {
+        const st = studentStats[name];
+        const cCount = st.correctSet.size;
+        totalCorrectSum += cCount;
+        if (st.attempts > 0) presentCount++;
+    });
+    const absentCount = 34 - presentCount;
+    const avgScore = presentCount > 0 ? (totalCorrectSum / 34).toFixed(1) : "0.0";
+
+    document.getElementById('tdPresentCount').textContent = String(presentCount);
+    document.getElementById('tdAbsentCount').textContent = String(absentCount);
+
+    // 2. Chick Progress Bar (Class Average or Selected Student)
+    const avgTitleEl = document.getElementById('tdAvgTitle');
+    let chickPercent = 0;
+    if (selectedStudentForChick && studentStats[selectedStudentForChick]) {
+        const sc = studentStats[selectedStudentForChick].correctSet.size;
+        chickPercent = Math.round((sc / 20) * 100);
+        avgTitleEl.textContent = `${selectedStudentForChick} 個人進度 (${sc}/20)`;
+    } else {
+        chickPercent = Math.round(((totalCorrectSum / 34) / 20) * 100);
+        avgTitleEl.textContent = `全班平均答對題數 (${avgScore}/20)`;
+    }
+    chickPercent = Math.max(0, Math.min(100, chickPercent));
+    document.getElementById('chickBarFill').style.width = `${chickPercent}%`;
+    document.getElementById('chickRunner').style.left = `${Math.max(3, Math.min(94, chickPercent))}%`;
+    document.getElementById('chickPercentText').textContent = `${chickPercent}%`;
+
+    // 3. Render 34 Student Cards
+    const cardsGrid = document.getElementById('tdStudentCardsGrid');
+    cardsGrid.innerHTML = '';
+    official34.forEach(name => {
+        const sc = studentStats[name].correctSet.size;
+        const pct = Math.round((sc / 20) * 100);
+        const isFull = (sc >= 20);
+        const card = document.createElement('div');
+        card.className = 'stu-prog-card' + (selectedStudentForChick === name ? ' active-stu' : '');
+        const barColor = isFull ? '#eab308' : (sc > 0 ? '#10b981' : '#cbd5e1');
+        card.innerHTML = `
+            <div class="stu-prog-top">
+                <span>${isFull ? '👑 ' : ''}${name}</span>
+                <span class="mono-num">(${sc}/20)</span>
+            </div>
+            <div class="stu-bar-bg">
+                <div class="stu-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            playSound('click');
+            selectedStudentForChick = (selectedStudentForChick === name) ? null : name;
+            renderTeacherDashboard();
+        });
+        cardsGrid.appendChild(card);
+    });
+
+    // 4. Render Top 10 Speed Leaderboard
+    const speedListEl = document.getElementById('tdSpeedList');
+    speedListEl.innerHTML = '';
+    const ranked = official34
+        .map(name => ({
+            name,
+            count: studentStats[name].correctSet.size,
+            ts: studentStats[name].lastCorrectTs || Infinity,
+            timeStr: studentStats[name].lastCorrectTimeStr || "--:--:--"
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.ts - b.ts;
+        })
+        .slice(0, 10);
+
+    if (ranked.length === 0) {
+        speedListEl.innerHTML = `<div style="text-align:center;color:#94a3b8;font-weight:800;padding:20px 0;">尚無學生完成作答紀錄</div>`;
+    } else {
+        ranked.forEach((r, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `${idx + 1}.`));
+            const div = document.createElement('div');
+            div.className = 'speed-item';
+            div.innerHTML = `
+                <span>${medal} ${r.name}</span>
+                <span class="mono-num" style="color:#be123c;">${r.count}/20 題 <span style="font-size:11px;color:#64748b;">(${r.timeStr})</span></span>
+            `;
+            speedListEl.appendChild(div);
+        });
+    }
+
+    // 5. Render Error Diagnosis View
+    const diagListEl = document.getElementById('tdDiagnosisList');
+    diagListEl.innerHTML = '';
+    const sortedDiag = Object.values(diagMap).sort((a, b) => b.wrongCount - a.wrongCount);
+
+    sortedDiag.forEach(item => {
+        const q = item.q;
+        const errRate = item.totalCount > 0 ? Math.round((item.wrongCount / item.totalCount) * 100) : 0;
+        const wrongArr = [];
+        item.wrongStudents.forEach((ans, stu) => {
+            wrongArr.push(`${stu}(誤答:${ans})`);
+        });
+
+        const row = document.createElement('div');
+        row.style.cssText = 'background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+        row.innerHTML = `
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span style="background:#ede9fe;color:#5b21b6;font-size:12px;font-weight:900;padding:2px 8px;border-radius:6px;">${q.code}｜${q.type}</span>
+                    <span class="mono-num" style="font-size:17px;font-weight:900;color:#1e293b;">${q.expr} = ${q.ans}</span>
+                    <span style="background:${item.wrongCount > 0 ? '#fee2e2' : '#dcfce7'};color:${item.wrongCount > 0 ? '#dc2626' : '#15803d'};font-size:12px;font-weight:900;padding:2px 8px;border-radius:999px;">
+                        答錯 ${item.wrongCount} 次 (錯誤率 ${errRate}%)
+                    </span>
+                </div>
+                <div style="font-size:12px;font-weight:800;color:#64748b;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    ${wrongArr.length > 0 ? `常見誤答學生：${wrongArr.join('、')}` : '目前無學生答錯此題'}
+                </div>
+            </div>
+            <button type="button" class="td-btn" style="background:#7c3aed;flex-shrink:0;">🔍 投影直式講解</button>
+        `;
+        row.querySelector('button').addEventListener('click', () => {
+            playSound('click');
+            openProjectorExplanation(q);
+        });
+        diagListEl.appendChild(row);
+    });
+}
+
+/********************************************************************
+ * 11. TEACHER 3-STEP PROJECTOR EXPLANATION MODAL (100% RIGHT-ALIGNED GRID)
+ ********************************************************************/
+/**
+ * 建立教師投影講解專用的「統一隱形直式方格網（CSS Grid 100% 末位對齊）」：
+ * - 確保被乘數、乘數、中間部分積與底部的積，每一個數位與小數點均從右往左嚴格對齊
+ * - 位數提示標籤（如 `(1位)`、`(共2位)`）固定放在最右側獨立說明欄，絕不擠壓或推歪中間的數字！
+ */
+function buildProjectorAlignedGridHTML(topStr, botStr, prodStr, dividerColor, prodColor, tagsObj = null) {
+    // Strip decimal points to determine maximum digit columns
+    const topDigits = String(topStr).replace('.', '').split('');
+    const botDigits = String(botStr).replace('.', '').split('');
+    const prodDigits = String(prodStr).replace('.', '').split('');
+    const N = Math.max(topDigits.length, botDigits.length, prodDigits.length, 3);
+
+    // Columns: [Col 1: Op '×'] + N * [Digit Col (24px), Dot Gap Col (12px)] + [Last Col: Note badge]
+    // Total columns = 1 + (2*N - 1) + (tagsObj ? 1 : 0)
+    const colTracks = ['28px'];
+    for (let i = 0; i < N; i++) {
+        colTracks.push('24px');
+        if (i < N - 1) colTracks.push('12px');
+    }
+    if (tagsObj) colTracks.push('auto');
+
+    const totalCols = colTracks.length;
+    const dividerEndCol = tagsObj ? totalCols : totalCols + 1;
+
+    function renderAlignedRowCells(numStr, rowNum, digitColor = '#ffffff', dotColor = '#facc15') {
+        const clean = String(numStr);
+        const dotIdx = clean.indexOf('.');
+        const digits = clean.replace('.', '').split('');
+        const L = digits.length;
+        let html = '';
+
+        digits.forEach((ch, i) => {
+            const col = 2 + 2 * (N - L + i);
+            html += `<div style="grid-row:${rowNum};grid-column:${col};text-align:center;color:${digitColor};">${ch}</div>`;
+        });
+
+        if (dotIdx !== -1) {
+            const dotCol = 2 + 2 * (N - L + dotIdx) - 1;
+            if (dotCol >= 2) {
+                html += `<div style="grid-row:${rowNum};grid-column:${dotCol};text-align:center;color:${dotColor};">.</div>`;
+            }
+        }
+        return html;
+    }
+
+    const noteCol = totalCols;
+    let cellsHTML = '';
+
+    // Row 1: Multiplicand
+    cellsHTML += renderAlignedRowCells(topStr, 1, '#ffffff', '#facc15');
+    if (tagsObj && tagsObj.topTag) {
+        cellsHTML += `<div style="grid-row:1;grid-column:${noteCol};padding-left:10px;font-size:13px;color:#fde047;white-space:nowrap;">${tagsObj.topTag}</div>`;
+    }
+
+    // Row 2: Multiply Sign + Multiplier
+    cellsHTML += `<div style="grid-row:2;grid-column:1;color:#facc15;text-align:left;">×</div>`;
+    cellsHTML += renderAlignedRowCells(botStr, 2, '#ffffff', '#38bdf8');
+    if (tagsObj && tagsObj.botTag) {
+        cellsHTML += `<div style="grid-row:2;grid-column:${noteCol};padding-left:10px;font-size:13px;color:#38bdf8;white-space:nowrap;">${tagsObj.botTag}</div>`;
+    }
+
+    // Row 3: Horizontal Divider Line (spanning operator & digit columns)
+    cellsHTML += `<div style="grid-row:3;grid-column:1 / ${dividerEndCol};border-bottom:3px solid ${dividerColor};margin:4px 0;"></div>`;
+
+    // Row 4: Product
+    cellsHTML += renderAlignedRowCells(prodStr, 4, prodColor, prodColor);
+    if (tagsObj && tagsObj.prodTag) {
+        cellsHTML += `<div style="grid-row:4;grid-column:${noteCol};padding-left:10px;font-size:13px;color:#93c5fd;white-space:nowrap;">${tagsObj.prodTag}</div>`;
+    }
+
+    return `
+        <div class="mono-num" style="background:#0f172a;color:#fff;border-radius:14px;padding:14px 16px;font-size:24px;font-weight:900;line-height:1.35;margin-top:10px;display:flex;justify-content:flex-end;">
+            <div style="display:grid;grid-template-columns:${colTracks.join(' ')};align-items:center;row-gap:2px;">
+                ${cellsHTML}
+            </div>
+        </div>
+    `;
+}
+
+function openProjectorExplanation(q) {
+    const eqText = q.displayExpr || q.expr;
+    document.getElementById('projTitleEq').textContent = `${eqText.replace('×', ' × ')} = ${q.ans}`;
+
+    const totalDec = q.aDec + q.bDec;
+    const grid = document.getElementById('projStepsGrid');
+
+    const step1Chalkboard = buildProjectorAlignedGridHTML(
+        q.intA,
+        q.intB,
+        q.intProd,
+        '#f59e0b',
+        '#fde047',
+        null
+    );
+
+    const step2Chalkboard = buildProjectorAlignedGridHTML(
+        q.a,
+        q.b,
+        q.unsimplified,
+        '#38bdf8',
+        '#6ee7b7',
+        {
+            topTag: `(${q.aDec}位)`,
+            botTag: `(${q.bDec}位)`,
+            prodTag: `(共${totalDec}位)`
+        }
+    );
+
+    grid.innerHTML = `
+        <!-- Step 1 -->
+        <div style="background:#ffffff;border:3px solid #f59e0b;border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+                <div style="background:#fef3c7;color:#92400e;font-weight:900;font-size:14px;padding:4px 10px;border-radius:8px;display:inline-block;margin-bottom:8px;">
+                    步驟 1：先當成整數相乘
+                </div>
+                <p style="font-size:13px;font-weight:800;color:#475569;line-height:1.45;">
+                    先忽略小數點，將 <b>${q.a}</b> 看作 <b>${q.intA}</b>，將 <b>${q.b}</b> 看作 <b>${q.intB}</b>，算出整數積：
+                </p>
+            </div>
+            ${step1Chalkboard}
+        </div>
+
+        <!-- Step 2 -->
+        <div style="background:#ffffff;border:3px solid #3b82f6;border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+                <div style="background:#dbeafe;color:#1e40af;font-weight:900;font-size:14px;padding:4px 10px;border-radius:8px;display:inline-block;margin-bottom:8px;">
+                    步驟 2：數出幾位小數點上小數點
+                </div>
+                <p style="font-size:13px;font-weight:800;color:#475569;line-height:1.45;">
+                    被乘數有 <b>${q.aDec}</b> 位小數，乘數有 <b>${q.bDec}</b> 位小數，合共 <b>${q.aDec} + ${q.bDec} = ${totalDec}</b> 位小數。從最右邊往左數 <b>${totalDec}</b> 位點上小數點：
+                </p>
+            </div>
+            ${step2Chalkboard}
+        </div>
+
+        <!-- Step 3 -->
+        <div style="background:#ffffff;border:3px solid #10b981;border-radius:18px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+                <div style="background:#d1fae5;color:#065f46;font-weight:900;font-size:14px;padding:4px 10px;border-radius:8px;display:inline-block;margin-bottom:8px;">
+                    步驟 3：劃去末尾的 0 化簡
+                </div>
+                <p style="font-size:13px;font-weight:800;color:#475569;line-height:1.45;">
+                    ${q.hasTrailingZero
+                        ? `點好小數點得到 <b>${q.unsimplified}</b> 後，把小數部分最右邊末尾的 <b>0</b> 劃去化簡，得到最終標準答案：`
+                        : `檢查積 <b>${q.unsimplified}</b> 的小數末尾沒有多餘的 0，不需劃去，直接得出標準答案：`}
+                </p>
+            </div>
+            <div class="mono-num" style="background:#0f172a;color:#fff;border-radius:14px;padding:14px;text-align:center;font-size:26px;font-weight:900;line-height:1.5;margin-top:10px;">
+                ${q.hasTrailingZero
+                    ? `<div style="color:#94a3b8;font-size:20px;">${q.unsimplified.slice(0, -1)}<span style="color:#ef4444;text-decoration:line-through;">0</span></div>`
+                    : `<div style="color:#94a3b8;font-size:16px;">無末尾 0 需省略</div>`}
+                <div style="color:#4ade80;font-size:30px;">= ${q.ans}</div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('projectorModal').classList.add('show');
+}
+
+/********************************************************************
+ * 12. EVENT LISTENERS & BOOTSTRAP
+ ********************************************************************/
+window.addEventListener('DOMContentLoaded', () => {
+    initStudentDropdown();
+    drawTunnelPath();
+    buildRandomized20Questions();
+    renderAll(true);
+    applyClassroomLockUI();
+    startCountdownTimer();
+
+    // Ruler Toggle Button
+    const btnRuler = document.getElementById('btnToggleRuler');
+    btnRuler.addEventListener('click', () => {
+        playSound('click');
+        showRuler = !showRuler;
+        btnRuler.textContent = `👁️ 顯示位數輔助尺：${showRuler ? '開' : '關'}`;
+        btnRuler.classList.toggle('off', !showRuler);
+        renderRightChallengeCard();
+    });
+
+    // Clear Selection & Confirm Dot Buttons
+    document.getElementById('btnClearChoice').addEventListener('click', () => {
+        playSound('click');
+        selectedSlotIdx = null;
+        struckTrailingZero = false;
+        renderRightChallengeCard();
+    });
+    document.getElementById('btnConfirmDot').addEventListener('click', handleConfirmDecimalPoint);
+
+    // One-Click Safe Logout
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        playSound('click');
+        currentStudent = "";
+        document.getElementById('studentSelect').value = "";
+        isTeacherUnlocked = false;
+        sessionStorage.removeItem('mole_teacher_privilege');
+        applyClassroomLockUI();
+        resetStudentProgress();
+    });
+
+    // Modals Open/Close
+    document.getElementById('btnCloseHint').addEventListener('click', () => {
+        playSound('click');
+        document.getElementById('warmHintModal').classList.remove('show');
+    });
+    document.getElementById('btnOpenReport').addEventListener('click', openStudentReportModal);
+    document.getElementById('btnCloseReport').addEventListener('click', () => {
+        playSound('click');
+        document.getElementById('reportModal').classList.remove('show');
+    });
+
+    // Teacher Password Pad & Dashboard Controls
+    document.getElementById('btnOpenStats').addEventListener('click', openPasswordModal);
+    document.getElementById('btnTeacherUnlockOnOverlay').addEventListener('click', openPasswordModal);
+
+    document.querySelectorAll('#pwdKeypad .pwd-key').forEach(btn => {
+        btn.addEventListener('click', () => handlePwdKey(btn.getAttribute('data-p')));
+    });
+
+    document.getElementById('btnTdClose').addEventListener('click', () => {
+        playSound('click');
+        document.getElementById('teacherModal').classList.remove('show');
+    });
+
+    document.getElementById('btnShowClassAvg').addEventListener('click', () => {
+        playSound('click');
+        selectedStudentForChick = null;
+        renderTeacherDashboard();
+    });
+
+    document.getElementById('btnTdToggleView').addEventListener('click', () => {
+        playSound('click');
+        const progView = document.getElementById('tdProgressView');
+        const diagView = document.getElementById('tdDiagnosisView');
+        const btn = document.getElementById('btnTdToggleView');
+        if (currentTeacherSubView === 'progress') {
+            currentTeacherSubView = 'diagnosis';
+            progView.style.display = 'none';
+            diagView.style.display = 'flex';
+            btn.textContent = '👥 學生進度看板';
+        } else {
+            currentTeacherSubView = 'progress';
+            progView.style.display = 'grid';
+            diagView.style.display = 'none';
+            btn.textContent = '🩺 錯題診斷';
+        }
+        renderTeacherDashboard();
+    });
+
+    document.getElementById('btnTdToggleLock').addEventListener('click', () => {
+        playSound('click');
+        isClassroomLocked = !isClassroomLocked;
+        applyClassroomLockUI();
+        const newState = isClassroomLocked ? 'closed' : 'open';
+        // Dual-channel GET + POST lock update
+        fetch(`${GAS_URL}?action=setLock&sheetId=${encodeURIComponent(SHEET_ID)}&lock=${newState}&t=${Date.now()}`, { mode: 'no-cors' }).catch(() => {});
+        fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: 'setLock', sheetId: SHEET_ID, lock: newState })
+        }).catch(() => {});
+    });
+
+    document.getElementById('btnTdSyncNow').addEventListener('click', () => {
+        playSound('click');
+        pollCloudData(true);
+    });
+
+    document.getElementById('btnTdResetAll').addEventListener('click', () => {
+        playSound('click');
+        lastResetTimestamp = Date.now();
+        localStorage.setItem('mole_last_reset_ts', String(lastResetTimestamp));
+        pausePollingUntil = Date.now() + 6000;
+        cloudRecords = [];
+        selectedStudentForChick = null;
+        renderTeacherDashboard();
+
+        // Dual-channel GET + POST clear command to GAS
+        fetch(`${GAS_URL}?action=clear&sheetId=${encodeURIComponent(SHEET_ID)}&sheetName=${encodeURIComponent(DATA_SHEET_NAME)}&t=${Date.now()}`, { mode: 'no-cors' }).catch(() => {});
+        fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: 'clear', sheetId: SHEET_ID, sheetName: DATA_SHEET_NAME })
+        }).catch(() => {});
+    });
+
+    document.getElementById('btnCloseProjector').addEventListener('click', () => {
+        playSound('click');
+        document.getElementById('projectorModal').classList.remove('show');
+    });
+
+    // Live clock & 8-second cloud polling
+    setInterval(updateTeacherClock, 1000);
+    pollCloudData(false);
+    setInterval(() => pollCloudData(false), 8000);
+});
+</script>
+</body>
+</html>
